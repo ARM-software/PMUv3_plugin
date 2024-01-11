@@ -11,10 +11,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <linux/perf_event.h>
-#include </home/ubuntu/linux/tools/lib/perf/include/perf/cpumap.h>
-#include </home/ubuntu/linux/tools/lib/perf/include/perf/threadmap.h>
-#include </home/ubuntu/linux/tools/lib/perf/include/perf/evsel.h>
-#include </home/ubuntu/linux/tools/lib/perf/include/internal/tests.h>
+#include <perf/cpumap.h>
+#include <perf/threadmap.h>
+#include <perf/evsel.h>
+#include <internal/tests.h>
 #include <sys/mman.h>
 #include <time.h>
 #include <inttypes.h> // Include inttypes.h for PRIu64 macro
