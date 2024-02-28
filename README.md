@@ -4,7 +4,48 @@ These were created and compiled on Target (ARM Neoverse CPUs)
 You can use the compiled binaries and static libraries .a files if you are running on the same target (Neoverse CPU)
 Else, please follow the below steps and replace the .a and .o files with your own binaries after you clone.  
 
-these are the compilation steps 
+**********************************************************************************************************************************************************************************************
+PMUV3_PLUGIN_BUNDLE STEPS
+
+These are the compilation steps for using pmuv3_plugin (pmuv3_plugin_bundle.c, pmuv3_plugin_bundle.h, pmuv3_plugin_helper_bundle.h) 
+
+To Generate Object file
+        gcc -c pmuv3_plugin_bundle.c -I/home/ubuntu/linux/tools/lib/perf/include -o pmuv3_plugin_bundle.o
+
+To Generate static library
+
+        ar rcs libpmuv3_plugin_bundle.a pmuv3_plugin_bundle.o
+
+**********************************************************************************************************************************************************************************************
+5G TESTCASE / UT MODIFICATIONS
+
+Once this is generated, in the 5G workloads (srsRAN, Radisys, etc.) include the  libpmuv3_plugin_bundle.a static library in Makefile or CMakelists.txt.
+
+In every testcase file, on the top, you need to include header this way. 
+
+extern "C" {
+#ifdef PARENT_DIR
+#include "pmuv3_plugin_bundle.h"
+#endif
+}
+
+Also, in every testcase file, add the 5 APIs as follows. NOTE: Remember to comment out the API calls that were used in the PMUV3 non-bundle version. 
+
+pmuv3_bundle_init(argc, argv);
+
+__T("test evsel",!test_evsel(0, NULL, event_values));
+
+get_start_count(perf_data, &count_data);
+
+///////////CODE CHUNK OF INTEREST. EXAMPLE FROM LDPC SRSRAN - encoder->encode(codeblock, data, cfg_enc);////////////////////
+
+get_end_count(perf_data, &count_data);
+
+shutdown_resources(perf_data);
+
+**********************************************************************************************************************************************************************************************
+PMUV3 PLUGIN (WITHOUT BUNDLE)
+these are the compilation steps for using pmuv3_plugin (pmuv3_plugin.c, pmuv3_plugin.h, pmuv3_plugin_helper.h) 
 
 To Generate Object file
 
