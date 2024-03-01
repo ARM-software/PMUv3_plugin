@@ -9,8 +9,8 @@ PMUV3_PLUGIN_BUNDLE STEPS
 
 These are the compilation steps for using pmuv3_plugin (pmuv3_plugin_bundle.c, pmuv3_plugin_bundle.h, pmuv3_plugin_helper_bundle.h) 
 
-To Generate Object file
-        gcc -c pmuv3_plugin_bundle.c -I/home/ubuntu/linux/tools/lib/perf/include -o pmuv3_plugin_bundle.o
+To Generate Object file (Assuming linux is within ut_integration) 
+        gcc -c pmuv3_plugin_bundle.c -I/home/ubuntu/ut_integration/linux/tools/lib/perf/include -o pmuv3_plugin_bundle.o
 
 To Generate static library
 
@@ -49,7 +49,7 @@ these are the compilation steps for using pmuv3_plugin (pmuv3_plugin.c, pmuv3_pl
 
 To Generate Object file
 
-        gcc —c pmuv3_plugin.c -I/home/ubuntu/linux/tools/lib/perf/include -o pmuv3_plugin.o
+        gcc —c pmuv3_plugin.c -I/home/ubuntu/ut_integration/linux/tools/lib/perf/include -o pmuv3_plugin.o
 
 To Generate static library
 

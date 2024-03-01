@@ -6,142 +6,6 @@
 
 #include "pmuv3_plugin_bundle.h"
 
-/*
-struct DEvent {
-    const char *event_name;
-    uint8_t event_value;
-};
-const struct DEvent e[] = {
-{"SW_INCR", 0x00},
-{"L1I_CACHE_REFILL", 0x01}
-};
-*/
-/*
-const struct Event events[] = { 
-{"SW_INCR", 0x00},
-{"L1I_CACHE_REFILL", 0x01},
-{"L1I_TLB_REFILL", 0x02},
-{"L1D_CACHE_REFILL", 0x03},
-{"L1D_CACHE", 0x04},
-{"L1D_TLB_REFILL", 0x05},
-{"INST_RETIRED", 0x08},
-{"EXC_TAKEN", 0x09},
-{"EXC_RETURN", 0x0A},
-{"CID_WRITE_RETIRED", 0x0B},
-{"BR_MIS_PRED", 0x10},
-{"CPU_CYCLES", 0x11},
-{"BR_PRED", 0x12},
-{"MEM_ACCESS", 0x13},
-{"L1I_CACHE", 0x14},
-{"L1D_CACHE_WB", 0x15},
-{"L2D_CACHE", 0x16},
-{"L2D_CACHE_REFILL", 0x17},
-{"L2D_CACHE_WB", 0x18},
-{"BUS_ACCESS", 0x19},
-{"MEMORY_ERROR", 0x1A},
-{"INST_SPEC", 0x1B},
-{"BUS_CYCLES", 0x1D},
-//{"CHAIN", 0x1E},
-{"L2D_CACHE_ALLOCATE", 0x20},
-{"BR_RETIRED", 0x21},
-{"BR_MIS_PRED_RETIRED", 0x22},
-{"STALL_FRONTEND", 0x23},
-{"STALL_BACKEND", 0x24},
-{"L1D_TLB", 0x25},
-{"L1I_TLB", 0x26},
-{"L3D_CACHE_ALLOCATE", 0x29},
-{"L3D_CACHE_REFILL", 0x2A},
-{"L3D_CACHE", 0x2B},
-{"L2D_TLB_REFILL", 0x2D},
-{"L2D_TLB", 0x2F},
-{"REMOTE_ACCESS", 0x31},
-{"DTLB_WALK", 0x34},
-{"ITLB_WALK", 0x35},
-{"LL_CACHE_RD", 0x36},
-{"LL_CACHE_MISS_RD", 0x37},
-{"L1D_CACHE_RD", 0x40},
-{"L1D_CACHE_WR", 0x41},
-{"L1D_CACHE_REFILL_RD", 0x42},
-{"L1D_CACHE_REFILL_WR", 0x43},
-{"L1D_CACHE_REFILL_INNER", 0x44},
-{"L1D_CACHE_REFILL_OUTER", 0x45},
-{"L1D_CACHE_WB_VICTIM", 0x46},
-{"L1D_CACHE_WB_CLEAN", 0x47},
-{"L1D_CACHE_INVAL", 0x48},
-{"L1D_TLB_REFILL_RD", 0x4C},
-{"L1D_TLB_REFILL_WR", 0x4D},
-{"L1D_TLB_RD", 0x4E},
-{"L1D_TLB_WR", 0x4F},
-{"L2D_CACHE_RD", 0x50},
-{"L2D_CACHE_WR", 0x51},
-{"L2D_CACHE_REFILL_RD", 0x52},
-{"L2D_CACHE_REFILL_WR", 0x53},
-{"L2D_CACHE_WB_VICTIM", 0x56},
-{"L2D_CACHE_WB_CLEAN", 0x57},
-{"L2D_CACHE_INVAL", 0x58},
-{"L2D_TLB_REFILL_RD", 0x5C},
-{"L2D_TLB_REFILL_WR", 0x5D},
-{"L2D_TLB_RD", 0x5E},
-{"L2D_TLB_WR", 0x5F},
-{"BUS_ACCESS_RD", 0x60},
-{"BUS_ACCESS_WR", 0x61},
-{"MEM_ACCESS_RD", 0x66},
-{"MEM_ACCESS_WR", 0x67},
-{"UNALIGNED_LD_SPEC", 0x68},
-{"UNALIGNED_ST_SPEC", 0x69},
-{"UNALIGNED_LDST_SPEC", 0x6A},
-{"LDREX_SPEC", 0x6C},
-{"STREX_PASS_SPEC", 0x6D},
-{"STREX_FAIL_SPEC", 0x6E},
-{"STREX_SPEC", 0x6F},
-{"LD_SPEC", 0x70},
-{"ST_SPEC", 0x71},
-{"LDST_SPEC", 0x72},
-{"DP_SPEC", 0x73},
-{"ASE_SPEC", 0x74},
-{"VFP_SPEC", 0x75},
-{"PC_WRITE_SPEC", 0x76},
-{"CRYPTO_SPEC", 0x77},
-{"BR_IMMED_SPEC", 0x78},
-{"BR_RETURN_SPEC", 0x79},
-{"BR_INDIRECT_SPEC", 0x7A},
-{"ISB_SPEC", 0x7C},
-{"DSB_SPEC", 0x7D},
-{"DMB_SPEC", 0x7E},
-{"EXC_UNDEF", 0x81},
-{"EXC_SVC", 0x82},
-{"EXC_PABORT", 0x83},
-{"EXC_DABORT", 0x84},
-{"EXC_IRQ", 0x86},
-{"EXC_FIQ", 0x87},
-{"EXC_SMC", 0x88},
-{"EXC_HVC", 0x8A},
-{"EXC_TRAP_PABORT", 0x8B},
-{"EXC_TRAP_DABORT", 0x8C},
-{"EXC_TRAP_OTHER", 0x8D},
-{"EXC_TRAP_IRQ", 0x8E},
-{"EXC_TRAP_FIQ", 0x8F},
-{"RC_LD_SPEC", 0x90},
-{"RC_ST_SPEC", 0x91},
-{"L3_CACHE_RD", 0xA0},
-
-
-};*/
-//const struct Event* get_events(void) {
-  //  return events;
-//}
-
-
-
-
-/*
-int event_names[] = { PERF_COUNT_HW_CPU_CYCLES, PERF_COUNT_HW_INSTRUCTIONS, PERF_COUNT_HW_CACHE_L1D, PERF_COUNT_HW_CACHE_REFERENCES, PERF_COUNT_HW_CACHE_MISSES, PERF_COUNT_HW_BUS_CYCLES, PERF_COUNT_HW_BRANCH_MISSES, PERF_COUNT_HW_STALLED_CYCLES_FRONTEND, PERF_COUNT_HW_STALLED_CYCLES_BACKEND};
-
-#define NUM_EVENTS sizeof(event_names)/sizeof(int)
-
-uint64_t eventnum = 0;
-volatile int arr_rand[0xFFFF]; // Array declaration
-volatile int iter = 1;*/
 int tests_failed;
 int tests_verbose;
 //struct perf_evsel *global_evsel;
@@ -799,61 +663,100 @@ uint64_t get_end_count(struct PerfData *perf_data, struct CountData *count_data)
 
 // SHUTDOWN API
 int shutdown_resources(struct PerfData *perf_data) {
+
+    printf("Entering shutdown_resources\n");
+
+    if (perf_data == NULL) {
+        printf("perf_data is NULL\n");
+        return -1; // Return an error code if perf_data is NULL
+    }
+
+    // Debugging statements for global_evsel_0
+    printf("Cleaning up global_evsel_0\n");
+
         if (perf_data->global_evsel_0 != NULL) {
+            printf("munmap, close, and delete global_evsel_0\n");
+            printf("Before munmap: global_evsel_0 = %p\n", (void*)perf_data->global_evsel_0);
             perf_evsel__munmap(perf_data->global_evsel_0);
+            printf("After munmap: global_evsel_0 = %p\n", (void*)perf_data->global_evsel_0);
+            printf("Before close: global_evsel_0 = %p\n", (void*)perf_data->global_evsel_0);
             perf_evsel__close(perf_data->global_evsel_0);
+            printf("After close: global_evsel_0 = %p\n", (void*)perf_data->global_evsel_0);
+            printf("Before delete: global_evsel_0 = %p\n", (void*)perf_data->global_evsel_0);
             perf_evsel__delete(perf_data->global_evsel_0);
+            printf("After delete: global_evsel_0 = %p\n", (void*)perf_data->global_evsel_0);
+            printf("Before setting perf_data->global_evsel_0 to NULL: perf_data->global_evsel_0 = %p\n", (void*)perf_data->global_evsel_0);
             perf_data->global_evsel_0 = NULL;
-        }
+            printf("After NULL: global_evsel_0 = %p\n", (void*)perf_data->global_evsel_0);
+        }else {
+        printf("global_evsel_0 is already NULL\n");
+    }
             
         if (perf_data->global_evsel_1 != NULL) {
+            printf("Before munmap: global_evsel_1 = %p\n", (void*)perf_data->global_evsel_1);
             perf_evsel__munmap(perf_data->global_evsel_1);
+            printf("After munmap: global_evsel_1 = %p\n", (void*)perf_data->global_evsel_1);
+            printf("Before close: global_evsel_1 = %p\n", (void*)perf_data->global_evsel_1);
             perf_evsel__close(perf_data->global_evsel_1);
+            printf("After close: global_evsel_1 = %p\n", (void*)perf_data->global_evsel_1);
             perf_evsel__delete(perf_data->global_evsel_1);
+            printf("After delete: global_evsel_1 = %p\n", (void*)perf_data->global_evsel_1);
             perf_data->global_evsel_1 = NULL;
+            printf("After perf data: global_evsel_1 = %p\n", (void*)perf_data->global_evsel_1);
         }
+        if(num_events >= 3){
         if (perf_data->global_evsel_2 != NULL) {
+            printf("Before munmap: global_evsel_2 = %p\n", (void*)perf_data->global_evsel_2);
             perf_evsel__munmap(perf_data->global_evsel_2);
+            printf("Before munmap: global_evsel_2 = %p\n", (void*)perf_data->global_evsel_2);
             perf_evsel__close(perf_data->global_evsel_2);
+            printf("Before munmap: global_evsel_2 = %p\n", (void*)perf_data->global_evsel_2);
             perf_evsel__delete(perf_data->global_evsel_2);
             perf_data->global_evsel_2 = NULL;
-        }
+            printf("After perf data: global_evsel_2 = %p\n", (void*)perf_data->global_evsel_2);
+        }}
+        if(num_events >= 4){
         if (perf_data->global_evsel_3 != NULL) {
             perf_evsel__munmap(perf_data->global_evsel_3);
             perf_evsel__close(perf_data->global_evsel_3);
             perf_evsel__delete(perf_data->global_evsel_3);
             perf_data->global_evsel_3 = NULL;
-        }
+        }}
+        if(num_events >= 5){
         if (perf_data->global_evsel_4 != NULL) {
             perf_evsel__munmap(perf_data->global_evsel_4);
             perf_evsel__close(perf_data->global_evsel_4);
             perf_evsel__delete(perf_data->global_evsel_4);
             perf_data->global_evsel_4 = NULL;
-        }
+        }}
+        if(num_events >= 6){
         if (perf_data->global_evsel_5 != NULL) {
             perf_evsel__munmap(perf_data->global_evsel_5);
             perf_evsel__close(perf_data->global_evsel_5);
             perf_evsel__delete(perf_data->global_evsel_5);
             perf_data->global_evsel_5 = NULL;
-        }
+        }}
+        if(num_events >= 7){
         if (perf_data->global_evsel_6 != NULL) {
             perf_evsel__munmap(perf_data->global_evsel_6);
             perf_evsel__close(perf_data->global_evsel_6);
             perf_evsel__delete(perf_data->global_evsel_6);
             perf_data->global_evsel_6 = NULL;
-        }
+        }}
+        if(num_events >= 8){
         if (perf_data->global_evsel_7 != NULL) {
             perf_evsel__munmap(perf_data->global_evsel_7);
             perf_evsel__close(perf_data->global_evsel_7);
             perf_evsel__delete(perf_data->global_evsel_7);
             perf_data->global_evsel_7 = NULL;
-        }
+        }}
+        if(num_events >= 9){
         if (perf_data->global_evsel_8 != NULL) {
             perf_evsel__munmap(perf_data->global_evsel_8);
             perf_evsel__close(perf_data->global_evsel_8);
             perf_evsel__delete(perf_data->global_evsel_8);
             perf_data->global_evsel_8 = NULL;
-        }
+        }}
     if (global_threads != NULL) {
         perf_thread_map__put(global_threads);
         global_threads = NULL;
