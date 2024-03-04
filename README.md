@@ -29,7 +29,7 @@ extern "C" {
 #endif
 }
 
-Also, in every testcase file, add the 5 APIs as follows. NOTE: Remember to comment out the API calls that were used in the PMUV3 non-bundle version. 
+Also, in every testcase file, add the 4 APIs as follows. NOTE: Remember to comment out the API calls that were used in the PMUV3 non-bundle version. 
 
 In testcases, in main function, we need to make below changes
 int main(int argc, char** argv)
