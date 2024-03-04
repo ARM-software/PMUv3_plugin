@@ -31,9 +31,18 @@ extern "C" {
 
 Also, in every testcase file, add the 5 APIs as follows. NOTE: Remember to comment out the API calls that were used in the PMUV3 non-bundle version. 
 
-pmuv3_bundle_init(argc, argv);
+In testcases, in main function, we need to make below changes
+int main(int argc, char** argv)
+{
+ if (argc != 2) {
+    printf("Usage: %s <arg>\n", argv[0]);
+    exit(1);
+ }
 
-__T("test evsel",!test_evsel(0, NULL, event_values));
+ num_bundles = atoi(argv[1]);
+ }
+
+pmuv3_bundle_init(num_bundles);
 
 get_start_count(perf_data, &count_data);
 
