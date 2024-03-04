@@ -21,7 +21,7 @@ struct perf_counts_values global_count_2;*/
 struct PerfData *perf_data;
 struct CountData count_data;
 struct perf_thread_map *global_threads;
-
+int num_bundles;
 uint64_t num_events; 
 int *event_values = NULL;
 char **event_names=NULL;
@@ -765,15 +765,12 @@ int shutdown_resources(struct PerfData *perf_data) {
     return 0;
 }
 
-void pmuv3_bundle_init(int argc, char *argv[]){
-if (argc != 2) {
-        printf("Usage: %s <arg>\n", argv[0]);
+int pmuv3_bundle_init(int num_bundles){
+    if(num_bundles < 0 || num_bundles >= TOTAL_BUNDLE_NUM){
+        printf("Error: Invalid bundle number %d\n", num_bundles);
         exit(1);
-    }
-
-    int arg = atoi(argv[1]);
-   
-    switch (arg) {
+    } 
+    switch (num_bundles) {
         case 0:
             num_events = sizeof(bundle0) / sizeof(bundle0[0]);
             event_values = malloc(num_events * sizeof(int));
@@ -916,6 +913,7 @@ if (argc != 2) {
             printf("Argument should be one of these in the interval [0,10] \n");
             exit(1);
     }
+    __T("test evsel",!test_evsel(0, NULL, event_values));
 }
 /*
 int main(int argc, char *argv[]){

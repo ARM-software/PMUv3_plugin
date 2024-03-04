@@ -9,7 +9,7 @@
 #include "pmuv3_plugin_helper_bundle.h"
 
 
-void pmuv3_bundle_init(int argc, char *argv[]);
+int pmuv3_bundle_init(int bundle_num);
 //INITIALIZATION API
 //int test_evsel(int argc, char **argv, int event_n);
 

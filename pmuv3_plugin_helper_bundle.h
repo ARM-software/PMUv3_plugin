@@ -57,8 +57,9 @@ extern struct CountData count_data;
 //extern struct perf_evsel *global_evsel;
 //extern struct perf_thread_map *global_threads;
 //extern struct perf_counts_values global_counts;
-#define MAX_EVENTS 8
-extern uint64_t num_events; 
+#define TOTAL_BUNDLE_NUM 11
+extern uint64_t num_events;
+extern int num_bundles;
 extern int *event_values;
 extern char **event_names;
 //extern struct perf_evsel *global_evsel[MAX_EVENTS];
