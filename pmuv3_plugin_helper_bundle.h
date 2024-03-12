@@ -23,11 +23,11 @@
 #include <linux/kernel.h>
 #include <unistd.h> // For sleep functionality in C
 //#include "pmuv3.h"
-struct Event {
-    const char *event_name;
-    uint8_t event_value; 
+//struct Event {
+    //const char *event_name;
+    //uint8_t event_value; 
     // Add other fields as needed
-};
+//};
 struct PerfData{
     struct perf_evsel *global_evsel_0;
     struct perf_evsel *global_evsel_1;
@@ -57,7 +57,7 @@ extern struct CountData count_data;
 //extern struct perf_evsel *global_evsel;
 //extern struct perf_thread_map *global_threads;
 //extern struct perf_counts_values global_counts;
-#define TOTAL_BUNDLE_NUM 11
+#define TOTAL_BUNDLE_NUM 15
 extern uint64_t num_events;
 extern int num_bundles;
 extern int *event_values;
@@ -150,12 +150,22 @@ bundles bundle7[] = {
 
 bundles bundle8[] = {
     {"CPU_CYCLES", 0x11},
-    {"INST_RETIRED", 0x08}
+    {"INST_RETIRED", 0x08},
+    {"INST_SPEC", 0x1B},
+    {"EXC_TAKEN", 0x09},
+    {"ST_SPEC", 0x71},
+    {"ASE_SPEC", 0x74},
+    {"PC_WRITE_SPEC", 0x76}
 };
 
 bundles bundle9[] = {
      {"CPU_CYCLES", 0x11},
      {"BR_RETURN_SPEC", 0x79},
+     {"BR_IMMED_SPEC", 0x78},
+     {"BR_INDIRECT_SPEC", 0x7A},
+     {"INST_SPEC", 0x1B},
+     {"LD_SPEC", 0x70},
+     {"DSB_SPEC", 0x7D},
 };
 
 bundles bundle10[] = {
@@ -163,6 +173,43 @@ bundles bundle10[] = {
     {"L1D_TLB_REFILL_RD", 0x4C},
     {"L1D_TLB_REFILL_WR", 0x4D},
     {"L1D_TLB_RD", 0x4E},
-    {"L1D_TLB_WR", 0x4F},
+    {"L1D_TLB_WR", 0x4F}
+};
+
+bundles bundle11[] = {
+    {"CPU_CYCLES", 0x11},
+    {"INST_RETIRED", 0x08},
+    {"LL_CACHE_MISS_RD", 0x37},
+    {"L1D_CACHE_REFILL", 0x03},
+    {"ITLB_WALK", 0x35},
+    {"L1I_CACHE_REFILL", 0x01},
+};
+
+bundles bundle12[] = {
+    {"CPU_CYCLES", 0x11},
+    {"INST_RETIRED", 0x08},
+    {"DTLB_WALK", 0x34},
+    {"BR_MIS_PRED_RETIRED", 0x22},
+    {"L2D_CACHE_REFILL", 0x17}
+};
+
+bundles bundle13[] = {
+    {"CPU_CYCLES", 0x11},
+    {"L1D_CACHE_REFILL_OUTER", 0x45},
+    {"L1D_CACHE_REFILL", 0x03},
+    {"L1D_CACHE_REFILL_RD", 0x42},
+    {"L1D_CACHE_RD", 0x40},
+    {"L1D_CACHE_REFILL_WR", 0x43},
+    {"L1D_CACHE_WR", 0x41}
+};
+
+bundles bundle14[] = {
+    {"CPU_CYCLES", 0x11},
+    {"CRYPTO_SPEC", 0x77},
+    {"ISB_SPEC", 0x7C},
+    {"DP_SPEC", 0x73},
+    {"DMB_SPEC", 0x7E},
+    {"VFP_SPEC", 0x75},
+    {"INST_SPEC", 0x1B}
 };
 #endif // PMUV3_INCLUDES_H_BUNDLE

@@ -909,17 +909,69 @@ int pmuv3_bundle_init(int num_bundles){
             }
             break;
 
+        case 11:
+            num_events = sizeof(bundle11) / sizeof(bundle11[0]);
+            event_values = malloc(num_events * sizeof(int));
+            event_names = (char **)malloc(num_events * sizeof(char*));
+
+            // Extract event values from the events array
+            for (size_t i = 0; i < num_events; i++) {
+                event_values[i] = bundle11[i].event_value;
+                event_names[i] = (char *)malloc(strlen(bundle11[i].name) * sizeof(char));
+                strcpy(event_names[i],bundle11[i].name);
+            }
+            break;
+
+        case 12:
+            num_events = sizeof(bundle12) / sizeof(bundle12[0]);
+            event_values = malloc(num_events * sizeof(int));
+            event_names = (char **)malloc(num_events * sizeof(char*));
+
+            // Extract event values from the events array
+            for (size_t i = 0; i < num_events; i++) {
+                event_values[i] = bundle12[i].event_value;
+                event_names[i] = (char *)malloc(strlen(bundle12[i].name) * sizeof(char));
+                strcpy(event_names[i],bundle12[i].name);
+            }
+            break;
+
+        case 13:
+            num_events = sizeof(bundle13) / sizeof(bundle13[0]);
+            event_values = malloc(num_events * sizeof(int));
+            event_names = (char **)malloc(num_events * sizeof(char*));
+
+            // Extract event values from the events array
+            for (size_t i = 0; i < num_events; i++) {
+                event_values[i] = bundle13[i].event_value;
+                event_names[i] = (char *)malloc(strlen(bundle13[i].name) * sizeof(char));
+                strcpy(event_names[i],bundle13[i].name);
+            }
+            break;
+
+        case 14:
+            num_events = sizeof(bundle14) / sizeof(bundle14[0]);
+            event_values = malloc(num_events * sizeof(int));
+            event_names = (char **)malloc(num_events * sizeof(char*));
+
+            // Extract event values from the events array
+            for (size_t i = 0; i < num_events; i++) {
+                event_values[i] = bundle14[i].event_value;
+                event_names[i] = (char *)malloc(strlen(bundle14[i].name) * sizeof(char));
+                strcpy(event_names[i],bundle14[i].name);
+            }
+            break;
         default:
-            printf("Argument should be one of these in the interval [0,10] \n");
+            printf("Argument should be one of these in the interval [0,14] \n");
             exit(1);
     }
     __T("test evsel",!test_evsel(0, NULL, event_values));
 }
 /*
 int main(int argc, char *argv[]){
-    pmuv3_bundle_init(argc, argv);
+    num_bundles = atoi(argv[1]);
+    pmuv3_bundle_init(num_bundles);
     
-    __T("test evsel",!test_evsel(0, NULL, event_values));
+   // __T("test evsel",!test_evsel(0, NULL, event_values));
         int k = 0;
         get_start_count(perf_data, &count_data);
 
