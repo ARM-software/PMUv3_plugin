@@ -17,19 +17,21 @@ int test_evsel(int argc, char **argv, int event_vals[]);
 //START CYCLE API
 //uint64_t get_start_count(struct perf_evsel *global_evsel, struct perf_counts_values *counts);
 
-uint64_t get_start_count(struct PerfData *perf_data, struct CountData *count_data);
+uint64_t get_start_count(struct PerfData *perf_data, struct CountData *count_data, const char* context, uint64_t index);
 
 //uint64_t get_start_count(struct perf_evsel *global_evsel[], struct perf_counts_values counts[], int index);
 
 //END CYCLE API
 //uint64_t get_end_count(struct perf_evsel *global_evsel, struct perf_counts_values *counts);
 
-uint64_t get_end_count(struct PerfData *perf_data, struct CountData *count_data);
+uint64_t get_end_count(struct PerfData *perf_data, struct CountData *count_data, const char* context, uint64_t index);
 
 //uint64_t get_end_count(struct perf_evsel *global_evsel[], struct perf_counts_values counts[], int index);
 //SHUTDOWN API
 int shutdown_resources(struct PerfData *perf_data);
+uint64_t get_next_index();
 
 //int shutdown_resources(struct perf_evsel *global_evsel[], struct perf_thread_map *global_threads, int num_events);
-
+//extern void write_column_names_to_csv(int bundle_num);
+//extern void generate_cycle_diff(int bundle_num);
 #endif // PMUV3_BUNDLE_H

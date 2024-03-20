@@ -5,7 +5,9 @@
  * Description: This plugin supports the initialization of performance monitoring for specific hardware events, reads cycle counts and cleans up the resources after that)
  */
 #define PMUV3_INCLUDES_H_BUNDLE
-
+//extern "C" {
+//#include <vector>
+//}
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -22,12 +24,14 @@
 #include <stdint.h>
 #include <linux/kernel.h>
 #include <unistd.h> // For sleep functionality in C
+
 //#include "pmuv3.h"
 //struct Event {
     //const char *event_name;
     //uint8_t event_value; 
     // Add other fields as needed
 //};
+/*
 struct PerfData{
     struct perf_evsel *global_evsel_0;
     struct perf_evsel *global_evsel_1;
@@ -38,11 +42,16 @@ struct PerfData{
     struct perf_evsel *global_evsel_6;
     struct perf_evsel *global_evsel_7;
     struct perf_evsel *global_evsel_8;
+};*/
+#define MAX_EVENTS 7
+
+struct PerfData{
+    struct perf_evsel *global_evsel[MAX_EVENTS];
 };
 extern struct PerfData *perf_data;
 
 extern struct perf_thread_map *global_threads;
-struct CountData{
+/*struct CountData{
     struct perf_counts_values global_count_0;
     struct perf_counts_values global_count_1;
     struct perf_counts_values global_count_2;
@@ -52,6 +61,9 @@ struct CountData{
     struct perf_counts_values global_count_6;
     struct perf_counts_values global_count_7;
     struct perf_counts_values global_count_8;
+};*/
+struct CountData{
+    struct perf_counts_values global_count[MAX_EVENTS];
 };
 extern struct CountData count_data;
 //extern struct perf_evsel *global_evsel;
@@ -65,8 +77,26 @@ extern char **event_names;
 //extern struct perf_evsel *global_evsel[MAX_EVENTS];
 extern struct perf_thread_map *global_threads;
 //extern struct perf_counts_values global_counts[MAX_EVENTS];
-extern uint64_t start_0,start_1,start_2,start_3,start_4,start_5,start_6,start_7;
-extern uint64_t end_0,end_1,end_2,end_3,end_4,end_5,end_6,end_7;
+//extern uint64_t start_0,start_1,start_2,start_3,start_4,start_5,start_6,start_7;
+//extern uint64_t end_0,end_1,end_2,end_3,end_4,end_5,end_6,end_7;
+//extern std::stack<uint64_t> start_stack;
+struct PMUv3_Bundle_Data {
+    unsigned int start_cnt[MAX_EVENTS];   // Start count
+    unsigned int end_cnt[MAX_EVENTS];   // End count
+    const char* context;  // Context information
+};
+/*
+struct PMUv3_Bundle_EndData {
+    unsigned int end[MAX_EVENTS];     // End count
+    const char* context;  // Context information
+};*/
+extern uint64_t global_index;
+extern struct PMUv3_Bundle_Data event_counts[2000];
+/*extern int start_index;
+extern int end_index;   
+extern struct PMUv3_Bundle_Data event_scounts[1000];
+extern struct PMUv3_Bundle_Data event_ecounts[1000];
+*/
 extern uint64_t eventnum;
 //extern int event_names[];
 // Function declarations
@@ -91,10 +121,6 @@ bundles bundle0[] = {
 
 bundles bundle1[] = {
     {"CPU_CYCLES", 0x11},
-    /*{"L1D_TLB_REFILL_RD", 0x4C},
-    {"L1D_TLB_REFILL_WR", 0x4D},
-    {"L1D_TLB_RD", 0x4E},
-    {"L1D_TLB_WR", 0x4F},*/
     {"L2D_TLB_REFILL_RD", 0x5C},
     {"L2D_TLB_REFILL_WR", 0x5D},
     {"L2D_TLB_RD", 0x5E},
