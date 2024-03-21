@@ -5,7 +5,58 @@ You can use the compiled binaries and static libraries .a files if you are runni
 Else, please follow the below steps and replace the .a and .o files with your own binaries after you clone.  
 
 **********************************************************************************************************************************************************************************************
-PMUV3_PLUGIN_BUNDLE STEPS
+PMUV3_PLUGIN_BUNDLE STEPS -LATEST VERSION 
+
+These are the compilation steps for using pmuv3_plugin (pmuv3_plugin_bundle.c, pmuv3_plugin_bundle.h, pmuv3_plugin_helper_bundle.h) 
+
+To Generate Object file (Assuming linux is within ut_integration) 
+        gcc -c pmuv3_plugin_bundle.c -I/home/ubuntu/ut_integration/linux/tools/lib/perf/include -o pmuv3_plugin_bundle.o
+        gcc -c processing.cpp -I/home/ubuntu/ut_integration/linux/tools/lib/perf/include -o processing.o
+
+To Generate static library
+
+        ar rcs libpmuv3_plugin_bundle.a pmuv3_plugin_bundle.o
+
+**********************************************************************************************************************************************************************************************
+5G TESTCASE / UT MODIFICATIONS
+
+Once this is generated, in the 5G workloads (srsRAN, Radisys, etc.) include the  libpmuv3_plugin_bundle.a static library in Makefile or CMakelists.txt.
+
+In every testcase file, on the top, you need to include header this way. 
+
+extern "C" {
+#ifdef PARENT_DIR
+#include "pmuv3_plugin_bundle.h"
+#endif
+}
+
+Also, in every testcase file, add the 4 APIs as follows. NOTE: Remember to comment out the API calls that were used in the PMUV3 non-bundle version. 
+
+In testcases, in main function, we need to make below changes
+int main(int argc, char** argv)
+{
+ if (argc != 2) {
+    printf("Usage: %s <arg>\n", argv[0]);
+    exit(1);
+ }
+
+ num_bundles = atoi(argv[1]);
+ }
+
+pmuv3_bundle_init(num_bundles);
+
+uint64_t local_index = get_next_index(); // NOTE : This local_index variable that you define should be unique everytime. You call this before the get_start_count() API and every single time give unique variable name like local1,local2
+get_start_count(perf_data, &count_data, "DU_HIGH1", local_index); // The third variable is a context. NOTE: Whatever context (3rd parameter) and index (4th parameter) one passes in get_start_count() should be passed to corresponding get_end_count() 
+
+///////////CODE CHUNK OF INTEREST. EXAMPLE FROM LDPC SRSRAN - encoder->encode(codeblock, data, cfg_enc);////////////////////
+
+get_end_count(perf_data, &count_data, "DU_HIGH1", local_index);
+process_data(); //Define this in a place after all instrumentation is done. 
+shutdown_resources(perf_data);
+
+
+**********************************************************************************************************************************************************************************************
+PMUV3_PLUGIN_BUNDLE STEPS -INITIAL VERSION
 
 These are the compilation steps for using pmuv3_plugin (pmuv3_plugin_bundle.c, pmuv3_plugin_bundle.h, pmuv3_plugin_helper_bundle.h) 
 
