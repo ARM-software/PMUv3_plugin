@@ -29,7 +29,7 @@ char **event_names=NULL;
 uint64_t start_0,start_1,start_2,start_3,start_4,start_5,start_6,start_7;
 uint64_t end_0,end_1,end_2,end_3,end_4,end_5,end_6,end_7;
 
-struct PMUv3_Bundle_Data event_counts[2000];
+struct PMUv3_Bundle_Data event_counts[10000];
 /*struct PMUv3_Bundle_Data event_scounts[1000];
 struct PMUv3_Bundle_Data event_ecounts[1000];
 */

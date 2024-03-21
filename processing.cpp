@@ -41,7 +41,7 @@ std::vector<int> cd_arr3;
 std::vector<int> cd_arr4;
 std::vector<int> cd_arr5;
 std::vector<int> cd_arr6;
-/*
+
 std::vector<int>cd_arr_e0;
 std::vector<int>cd_arr_e1;
 std::vector<int>cd_arr_e2;
@@ -49,13 +49,76 @@ std::vector<int>cd_arr_e3;
 std::vector<int>cd_arr_e4;
 std::vector<int>cd_arr_e5;
 std::vector<int>cd_arr_e6;
-*/
+
 //int lowerIteration = 0, upperIteration = 0;
 uint64_t cycle_diff_0,cycle_diff_1,cycle_diff_2,cycle_diff_3,cycle_diff_4,cycle_diff_5,cycle_diff_6;
 
 //std::ofstream outFile("percentiles_du_high.csv");
+void process_data(){
 
+generate_cycle_diff(num_events);
+write_column_names_to_csv(num_bundles);
+write_to_csv(num_bundles);
 
+}
+void process_data_srs(){
+
+//generate_cycle_diff(num_events);
+write_column_names_to_csv(num_bundles);
+write_to_csv_srs(num_bundles);
+
+}
+
+void write_to_csv_srs(int bundle_num){
+  for(size_t i = 0; i< cd_arr_e0.size(); ++i){
+    if(bundle_num == 0) {
+      outFile0 << context_arr[i] << "," << cd_arr_e0[i] << ","  << cd_arr_e1[i] << "," << cd_arr_e2[i] << ","  << cd_arr_e3[i] << "," << cd_arr_e4[i] << "," << cd_arr_e5[i] << "\n";
+    }
+    else if(bundle_num == 1) {
+      outFile1 << context_arr[i] << "," << cd_arr_e0[i] << ","  << cd_arr_e1[i] << "," << cd_arr_e2[i] << ","  << cd_arr_e3[i] << "," << cd_arr_e4[i] << "\n";
+    }
+    else if(bundle_num == 2) {
+      outFile2 << context_arr[i] << "," << cd_arr_e0[i] << ","  << cd_arr_e1[i] << "," << cd_arr_e2[i] << ","  << cd_arr_e3[i] << "\n";
+    }
+    else if(bundle_num == 3) {
+      outFile3 << context_arr[i] << "," << cd_arr_e0[i] << ","  << cd_arr_e1[i] << "," << cd_arr_e2[i] << ","  << cd_arr_e3[i] << "," << cd_arr_e4[i] << ","  << cd_arr_e5[i] << ","  << cd_arr_e6[i] << "\n";
+    }
+    else if(bundle_num == 4) {
+      outFile4 << context_arr[i] << "," << cd_arr_e0[i] << ","  << cd_arr_e1[i] << "," << cd_arr_e2[i] << "\n";
+    }
+    else if(bundle_num == 5) {
+      outFile5 << context_arr[i] << "," << cd_arr_e0[i] << ","  << cd_arr_e1[i] << "," << cd_arr_e2[i] << "\n";
+    }
+    else if(bundle_num == 6){
+      outFile6 << context_arr[i] << "," << cd_arr_e0[i] << ","  << cd_arr_e1[i] << "," << cd_arr_e2[i] << ","  << cd_arr_e3[i] << "," << cd_arr_e4[i] << ","  << cd_arr_e5[i] << ","  << cd_arr_e6[i] << "\n";
+    }
+    else if(bundle_num == 7){
+      outFile7 << context_arr[i] << "," << cd_arr_e0[i] << ","  << cd_arr_e1[i] << "," << cd_arr_e2[i] << ","  << cd_arr_e3[i] << "\n";
+    }
+    else if(bundle_num == 8){
+      outFile8 << context_arr[i] << "," << cd_arr_e0[i] << ","  << cd_arr_e1[i] << "," << cd_arr_e2[i] << ","  << cd_arr_e3[i] << "," << cd_arr_e4[i] << ","  << cd_arr_e5[i] << ","  << cd_arr_e6[i] << "\n";
+    }
+    else if(bundle_num == 9){
+      outFile9 << context_arr[i] << "," << cd_arr_e0[i] << ","  << cd_arr_e1[i] << "," << cd_arr_e2[i] << ","  << cd_arr_e3[i] << "," << cd_arr_e4[i] << ","  << cd_arr_e5[i] << ","  << cd_arr_e6[i] << "\n";
+    }
+    else if(bundle_num == 10){
+      outFile10 << context_arr[i] << "," << cd_arr_e0[i] << ","  << cd_arr_e1[i] << "," << cd_arr_e2[i] << "," << cd_arr_e3[i] << "," << cd_arr_e4[i] << "\n";
+    }
+    else if(bundle_num == 11){
+      outFile11 << context_arr[i] << "," << cd_arr_e0[i] << ","  << cd_arr_e1[i] << "," << cd_arr_e2[i] << ","  << cd_arr_e3[i]  << "," << cd_arr_e4[i] << "," << cd_arr_e5[i] << "\n";
+    }
+    else if(bundle_num == 12){
+      outFile12 << context_arr[i] << "," << cd_arr_e0[i] << ","  << cd_arr_e1[i] << "," << cd_arr_e2[i] << ","  << cd_arr_e3[i]  << "," << cd_arr_e4[i] << "\n";
+    }
+    else if(bundle_num == 13){
+      outFile13 << context_arr[i] << "," << cd_arr_e0[i] << ","  << cd_arr_e1[i] << "," << cd_arr_e2[i] << ","  << cd_arr_e3[i]  << "," << cd_arr_e4[i] << "," << cd_arr_e5[i] << "," << cd_arr_e6[i] << "\n";
+    }
+    else if(bundle_num == 14){
+      outFile14 << context_arr[i] << "," << cd_arr_e0[i] << ","  << cd_arr_e1[i] << "," << cd_arr_e2[i] << ","  << cd_arr_e3[i]  << "," << cd_arr_e4[i] << "," << cd_arr_e5[i] << "," << cd_arr_e6[i] << "\n";
+    }
+  }
+  
+}
 void write_column_names_to_csv(int bundle_num){
   if(bundle_num == 0) {
     outFile0 << "CONTEXT,CPU_CYCLES,L1D_TLB_REFILL,L1D_TLB,L2D_TLB_REFILL,L2D_TLB,DTLB_WALK\n";
@@ -103,7 +166,56 @@ void write_column_names_to_csv(int bundle_num){
     outFile14 << "CONTEXT,CPU_CYCLES,CRYPTO_SPEC,ISB_SPEC,DP_SPEC,DMB_SPEC,VFP_SPEC,INST_SPEC\n";
   }
 }
-
+void write_to_csv(int bundle_num){
+  for(size_t i = 0; i< cd_arr0.size(); ++i){
+    if(bundle_num == 0) {
+      outFile0 << context_arr[i] << "," << cd_arr0[i] << ","  << cd_arr1[i] << "," << cd_arr2[i] << ","  << cd_arr3[i] << "," << cd_arr4[i] << "," << cd_arr5[i] << "\n";
+    }
+    else if(bundle_num == 1) {
+      outFile1 << context_arr[i] << "," << cd_arr0[i] << ","  << cd_arr1[i] << "," << cd_arr2[i] << ","  << cd_arr3[i] << "," << cd_arr4[i] << "\n";
+    }
+    else if(bundle_num == 2) {
+      outFile2 << context_arr[i] << "," << cd_arr0[i] << ","  << cd_arr1[i] << "," << cd_arr2[i] << ","  << cd_arr3[i] << "\n";
+    }
+    else if(bundle_num == 3) {
+      outFile3 << context_arr[i] << "," << cd_arr0[i] << ","  << cd_arr1[i] << "," << cd_arr2[i] << ","  << cd_arr3[i] << "," << cd_arr4[i] << ","  << cd_arr5[i] << ","  << cd_arr6[i] << "\n";
+    }
+    else if(bundle_num == 4) {
+      outFile4 << context_arr[i] << "," << cd_arr0[i] << ","  << cd_arr1[i] << "," << cd_arr2[i] << "\n";
+    }
+    else if(bundle_num == 5) {
+      outFile5 << context_arr[i] << "," << cd_arr0[i] << ","  << cd_arr1[i] << "," << cd_arr2[i] << "\n";
+    }
+    else if(bundle_num == 6){
+      outFile6 << context_arr[i] << "," << cd_arr0[i] << ","  << cd_arr1[i] << "," << cd_arr2[i] << ","  << cd_arr3[i] << "," << cd_arr4[i] << ","  << cd_arr5[i] << ","  << cd_arr6[i] << "\n";
+    }
+    else if(bundle_num == 7){
+      outFile7 << context_arr[i] << "," << cd_arr0[i] << ","  << cd_arr1[i] << "," << cd_arr2[i] << ","  << cd_arr3[i] << "\n";
+    }
+    else if(bundle_num == 8){
+      outFile8 << context_arr[i] << "," << cd_arr0[i] << ","  << cd_arr1[i] << "," << cd_arr2[i] << ","  << cd_arr3[i] << "," << cd_arr4[i] << ","  << cd_arr5[i] << ","  << cd_arr6[i] << "\n";
+    }
+    else if(bundle_num == 9){
+      outFile9 << context_arr[i] << "," << cd_arr0[i] << ","  << cd_arr1[i] << "," << cd_arr2[i] << ","  << cd_arr3[i] << "," << cd_arr4[i] << ","  << cd_arr5[i] << ","  << cd_arr6[i] << "\n";
+    }
+    else if(bundle_num == 10){
+      outFile10 << context_arr[i] << "," << cd_arr0[i] << ","  << cd_arr1[i] << "," << cd_arr2[i] << "," << cd_arr3[i] << "," << cd_arr4[i] << "\n";
+    }
+    else if(bundle_num == 11){
+      outFile11 << context_arr[i] << "," << cd_arr0[i] << ","  << cd_arr1[i] << "," << cd_arr2[i] << ","  << cd_arr3[i]  << "," << cd_arr4[i] << "," << cd_arr5[i] << "\n";
+    }
+    else if(bundle_num == 12){
+      outFile12 << context_arr[i] << "," << cd_arr0[i] << ","  << cd_arr1[i] << "," << cd_arr2[i] << ","  << cd_arr3[i]  << "," << cd_arr4[i] << "\n";
+    }
+    else if(bundle_num == 13){
+      outFile13 << context_arr[i] << "," << cd_arr0[i] << ","  << cd_arr1[i] << "," << cd_arr2[i] << ","  << cd_arr3[i]  << "," << cd_arr4[i] << "," << cd_arr5[i] << "," << cd_arr6[i] << "\n";
+    }
+    else if(bundle_num == 14){
+      outFile14 << context_arr[i] << "," << cd_arr0[i] << ","  << cd_arr1[i] << "," << cd_arr2[i] << ","  << cd_arr3[i]  << "," << cd_arr4[i] << "," << cd_arr5[i] << "," << cd_arr6[i] << "\n";
+    }
+  }
+  
+}
 /*
 void write_to_csv(int bundle_num){
   for(size_t i = 0; i< cd_arr0.size(); ++i){

@@ -91,7 +91,7 @@ struct PMUv3_Bundle_EndData {
     const char* context;  // Context information
 };*/
 extern uint64_t global_index;
-extern struct PMUv3_Bundle_Data event_counts[2000];
+extern struct PMUv3_Bundle_Data event_counts[10000];
 /*extern int start_index;
 extern int end_index;   
 extern struct PMUv3_Bundle_Data event_scounts[1000];

@@ -6,8 +6,12 @@
 // Declare functions
 //extern "C" {
 void generate_cycle_diff(int num_bundles);
+void write_to_csv_srs(int bundle_num);
+void write_to_csv(int bundle_num);
 void write_column_names_to_csv(int bundle_num);
-void push_to_start_stack(uint64_t num_events); 
+void process_data();
+void process_data_srs();
+//void push_to_start_stack(uint64_t num_events); 
 //}
 // Declare variables
 #ifdef __cplusplus
@@ -21,6 +25,13 @@ extern std::vector<int> cd_arr3;
 extern std::vector<int> cd_arr4;
 extern std::vector<int> cd_arr5;
 extern std::vector<int> cd_arr6;
+extern std::vector<int> cd_arr_e0;
+extern std::vector<int> cd_arr_e1;
+extern std::vector<int> cd_arr_e2;
+extern std::vector<int> cd_arr_e3;
+extern std::vector<int> cd_arr_e4;
+extern std::vector<int> cd_arr_e5;
+extern std::vector<int> cd_arr_e6;
 extern std::ofstream outFile0; //global
 extern std::ofstream outFile1; //global
 extern std::ofstream outFile2; //global
