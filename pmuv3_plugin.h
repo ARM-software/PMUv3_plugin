@@ -10,7 +10,7 @@
 
 //INITIALIZATION API
 int test_evsel(int argc, char **argv, int event_n);
-
+void pmuv3_cycle_init();
 //START CYCLE API
 uint64_t get_start_count(struct perf_evsel *global_evsel, struct perf_counts_values *counts);
 

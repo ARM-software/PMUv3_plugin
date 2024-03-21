@@ -79,6 +79,8 @@ In your application's Makefile or CMakeLists files, make sure to add the includ 
 
 In your application source code where the PMUv3 instrument will be embedded, you need to include header this way. 
 
+#include "processing.hpp" 
+
 #ifdef PMUV3_CPU_BUNDLES
 extern "C" {
     #ifdef PARENT_DIR
