@@ -15,7 +15,7 @@ To Generate Object file (Assuming linux is within ut_integration)
 
 To Generate static library
 
-        ar rcs libpmuv3_plugin_bundle.a pmuv3_plugin_bundle.o
+        ar rcs libpmuv3_plugin_bundle.a pmuv3_plugin_bundle.o processing.o
 
 **********************************************************************************************************************************************************************************************
 5G TESTCASE / UT MODIFICATIONS
