@@ -29,9 +29,14 @@ int libperf_print_(enum libperf_print_level level,
 }   
 #endif
 
+int pmuv3_cycle_init(){
+ __T("test evsel", !test_evsel(0, NULL, event_names[eventnum]));
+ return 0;
+}
+/*
 void pmuv3_cycle_init(){
  __T("test evsel", !test_evsel(0, NULL, event_names[eventnum]));
-}
+}*/
 
 int test_stat_user_read(int event)
 {
