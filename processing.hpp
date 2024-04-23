@@ -5,12 +5,15 @@
 #include <stack>
 // Declare functions
 //extern "C" {
-void generate_cycle_diff(int num_bundles);
-void write_to_csv_srs(int bundle_num);
-void write_to_csv(int bundle_num);
-void write_column_names_to_csv(int bundle_num);
-void process_data();
-void process_data_srs();
+void generate_cycle_diff(int num_events);
+void cycle_diff(int num_events);
+void add_values_to_csv(int bundle_num, std::ofstream& outFile);
+void write_to_csv(int bundle_num, std::ofstream& outFile);
+void write_column_names_to_csv(int bundle_num, std::ofstream& outFile);
+void add_column_names_to_csv(int bundle_num, std::ofstream& outFile);
+//void process_data(int bundle_num);
+void process_data(int bundle_num, uint64_t index_test);
+void post_process(int bundle_num);
 //void push_to_start_stack(uint64_t num_events); 
 //}
 // Declare variables
@@ -18,40 +21,23 @@ void process_data_srs();
 //extern "C" {
 #endif
 extern std::vector<const char*> context_arr;
-extern std::vector<int> cd_arr0;
-extern std::vector<int> cd_arr1;
-extern std::vector<int> cd_arr2;
-extern std::vector<int> cd_arr3;
-extern std::vector<int> cd_arr4;
-extern std::vector<int> cd_arr5;
-extern std::vector<int> cd_arr6;
-extern std::vector<int> cd_arr_e0;
-extern std::vector<int> cd_arr_e1;
-extern std::vector<int> cd_arr_e2;
-extern std::vector<int> cd_arr_e3;
-extern std::vector<int> cd_arr_e4;
-extern std::vector<int> cd_arr_e5;
-extern std::vector<int> cd_arr_e6;
-extern std::ofstream outFile0; //global
-extern std::ofstream outFile1; //global
-extern std::ofstream outFile2; //global
-extern std::ofstream outFile3; //global
-extern std::ofstream outFile4; //global
-extern std::ofstream outFile5; //global
-extern std::ofstream outFile6; //global
-extern std::ofstream outFile7; //global
-extern std::ofstream outFile8; //global
-extern std::ofstream outFile9; //global
-extern std::ofstream outFile10; //global
-extern std::ofstream outFile11; //global
-extern std::ofstream outFile12; //global
-extern std::ofstream outFile13; //global
-extern std::ofstream outFile14; //global
-//extern std::stack<uint64_t> start_stack;
+extern std::vector<int64_t> cd_arr0;
+extern std::vector<int64_t> cd_arr1;
+extern std::vector<int64_t> cd_arr2;
+extern std::vector<int64_t> cd_arr3;
+extern std::vector<int64_t> cd_arr4;
+extern std::vector<int64_t> cd_arr5;
+extern std::vector<int64_t> cd_arr6;
+extern std::vector<int64_t> cd_arr_e0;
+extern std::vector<int64_t> cd_arr_e1;
+extern std::vector<int64_t> cd_arr_e2;
+extern std::vector<int64_t> cd_arr_e3;
+extern std::vector<int64_t> cd_arr_e4;
+extern std::vector<int64_t> cd_arr_e5;
+extern std::vector<int64_t> cd_arr_e6;
 #ifdef __cplusplus
 //}
 #endif
-// Declare other variables if necessary
 
 #endif // PROCESSING_HPP
 
