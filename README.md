@@ -30,6 +30,15 @@ We assume the directory structure like:
            /linux (git clone from Linux kernel)
            /PMUv3_plugin 
 	   /YourApplication
+FIRST STEP BEFORE YOU BEGIN INSTRUMENTING:
+
+To do the static library compilation, run ./build.sh from /home/ubuntu/ut_integration/PMUv3_plugin/ directory. 
+
+We provide a script build.sh to run above in one command
+
+So just run ./build.sh if you are going to instrument around a C++ codebase. If it is a C codebase, then comment line 19 of build.sh and uncomment line 21 and run ./build.sh
+
+EXPLANATION OF BUILD.SH (READ BELOW FOR UNDERSTANDING, NO NEED TO EXECUTE, build.sh will do the same.)
 
 To Generate Object file
         gcc -c pmuv3_plugin_bundle.c -I/home/ubuntu/ut_integration/linux/tools/lib/perf/include -o pmuv3_plugin_bundle.o
@@ -40,7 +49,7 @@ To Generate static libraries (libpmuv3_plugin.a for CPU CYCLE and libpmuv3_plugi
         ar rcs libpmuv3_plugin_bundle.a pmuv3_plugin_bundle.o processing.o
 	ar rcs libpmuv3_plugin.a pmuv3_plugin.o
 
-We provide a script build.sh to run above in one command
+
 
 How to Use the APIs:
 --------------------
@@ -220,6 +229,7 @@ This populates bundle0.csv, bundle1.csv etc. as requested by user.
 
 3.For PMUV3_CPU_BUNDLES INSTRUMENTATION IN A C CODEBASE - SINGLE CHUNK OF CODE, DIFFERENT CHUNK OF CODES. - Follow the same procedure described above with small changes.
 -
+Before you run ./build.sh, vim build.sh and uncomment line 21 and comment line 19. 
 
 No need for extern in C code base so we include directly. 
 
