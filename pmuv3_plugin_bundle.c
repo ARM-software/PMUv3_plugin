@@ -19,19 +19,147 @@ char **event_names=NULL;
 uint64_t start_0,start_1,start_2,start_3,start_4,start_5,start_6,start_7;
 uint64_t end_0,end_1,end_2,end_3,end_4,end_5,end_6,end_7;
 
+bundles bundle0[] = {
+    {"CPU_CYCLES", 0x11},
+    {"L1D_TLB_REFILL", 0x05},
+    {"L1D_TLB", 0x25},
+    {"L2D_TLB_REFILL", 0x2D},
+    {"L2D_TLB", 0x2F},
+    {"DTLB_WALK", 0x34}
+};
+
+bundles bundle1[] = {
+    {"CPU_CYCLES", 0x11},
+    {"L2D_TLB_REFILL_RD", 0x5C},
+    {"L2D_TLB_REFILL_WR", 0x5D},
+    {"L2D_TLB_RD", 0x5E},
+    {"L2D_TLB_WR", 0x5F}
+};
+
+bundles bundle2[] = {
+    {"CPU_CYCLES", 0x11},
+    {"MEM_ACCESS", 0x13},
+    {"BUS_ACCESS", 0x19},
+    {"MEMORY_ERROR", 0x1A}
+};
+
+bundles bundle3[] = {
+    {"CPU_CYCLES", 0x11},
+    {"BR_MIS_PRED", 0x10},
+    {"BR_PRED", 0x12},
+    {"BR_RETIRED", 0x21},
+    {"BR_MIS_PRED_RETIRED", 0x22},
+    {"BR_IMMED_SPEC", 0x78},
+    //{"BR_RETURN_SPEC", 0x79},
+    {"BR_INDIRECT_SPEC", 0x7A}
+};
+
+bundles bundle4[] = {
+    {"CPU_CYCLES", 0x11},
+    {"STALL_FRONTEND", 0x23},
+    {"STALL_BACKEND", 0x24}
+};
+
+bundles bundle5[] = {
+    {"CPU_CYCLES", 0x11},
+    {"L1I_CACHE_REFILL", 0x01},
+    {"L1I_CACHE", 0x14}
+};
+
+bundles bundle6[] = {
+    {"CPU_CYCLES", 0x11},
+    {"L1D_CACHE_REFILL", 0x03},
+    {"L1D_CACHE", 0x04},
+    {"L2D_CACHE", 0x16},
+    {"L2D_CACHE_REFILL", 0x17},
+    {"L3D_CACHE_REFILL", 0x2A},
+    {"L3D_CACHE", 0x2B},
+};
+
+bundles bundle7[] = {
+    {"CPU_CYCLES", 0x11},
+    {"L1I_TLB_REFILL", 0x02},
+    {"L1I_TLB", 0x26},
+    {"ITLB_WALK", 0x35}
+};
+
+bundles bundle8[] = {
+    {"CPU_CYCLES", 0x11},
+    {"INST_RETIRED", 0x08},
+    {"INST_SPEC", 0x1B},
+    {"EXC_TAKEN", 0x09},
+    {"ST_SPEC", 0x71},
+    {"ASE_SPEC", 0x74},
+    {"PC_WRITE_SPEC", 0x76}
+};
+
+bundles bundle9[] = {
+    {"CPU_CYCLES", 0x11},
+    {"BR_RETURN_SPEC", 0x79},
+    {"BR_IMMED_SPEC", 0x78},
+    {"BR_INDIRECT_SPEC", 0x7A},
+    {"INST_SPEC", 0x1B},
+    {"LD_SPEC", 0x70},
+    {"DSB_SPEC", 0x7D},
+};
+
+bundles bundle10[] = {
+    {"CPU_CYCLES", 0x11},
+    {"L1D_TLB_REFILL_RD", 0x4C},
+    {"L1D_TLB_REFILL_WR", 0x4D},
+    {"L1D_TLB_RD", 0x4E},
+    {"L1D_TLB_WR", 0x4F}
+};
+
+bundles bundle11[] = {
+    {"CPU_CYCLES", 0x11},
+    {"INST_RETIRED", 0x08},
+    {"LL_CACHE_MISS_RD", 0x37},
+    {"L1D_CACHE_REFILL", 0x03},
+    {"ITLB_WALK", 0x35},
+    {"L1I_CACHE_REFILL", 0x01},
+};
+
+bundles bundle12[] = {
+    {"CPU_CYCLES", 0x11},
+    {"INST_RETIRED", 0x08},
+    {"DTLB_WALK", 0x34},
+    {"BR_MIS_PRED_RETIRED", 0x22},
+    {"L2D_CACHE_REFILL", 0x17}
+};
+
+bundles bundle13[] = {
+    {"CPU_CYCLES", 0x11},
+    {"L1D_CACHE_REFILL_OUTER", 0x45},
+    {"L1D_CACHE_REFILL", 0x03},
+    {"L1D_CACHE_REFILL_RD", 0x42},
+    {"L1D_CACHE_RD", 0x40},
+    {"L1D_CACHE_REFILL_WR", 0x43},
+    {"L1D_CACHE_WR", 0x41}
+};
+
+bundles bundle14[] = {
+    {"CPU_CYCLES", 0x11},
+    {"CRYPTO_SPEC", 0x77},
+    {"ISB_SPEC", 0x7C},
+    {"DP_SPEC", 0x73},
+    {"DMB_SPEC", 0x7E},
+    {"VFP_SPEC", 0x75},
+    {"INST_SPEC", 0x1B}
+};
 struct PMUv3_Bundle_Data event_counts[10000];
 uint64_t global_index = 0;
-uint64_t get_next_index() {
+uint64_t get_next_index(void) {
     return global_index++;
 }
 
 #if 1
 int libperf_print_(enum libperf_print_level level,
-			 const char *fmt, va_list ap)
+        const char *fmt, va_list ap)
 {
-	//return 0;
-	return vfprintf(stderr, fmt, ap);
-}   
+    //return 0;
+    return vfprintf(stderr, fmt, ap);
+}
 #endif
 
 
@@ -65,9 +193,9 @@ int test_stat_user_read(int events[]) {
     struct perf_event_mmap_page *pc_6;
     struct perf_event_mmap_page *pc_7;
     struct perf_event_mmap_page *pc_8;
-  //  struct perf_event_attr attr_0;
-  //  struct perf_event_attr attr_1;
-  //  struct perf_event_attr attr_2;
+    //struct perf_event_attr attr_0;
+    //struct perf_event_attr attr_1;
+    //struct perf_event_attr attr_2;
     struct perf_event_attr attr_2;
     struct perf_event_attr attr_3;
     struct perf_event_attr attr_4;
@@ -76,9 +204,9 @@ int test_stat_user_read(int events[]) {
     struct perf_event_attr attr_7;
     struct perf_event_attr attr_8;
     int err_0,err_1,err_2,err_3,err_4,err_5,err_6,err_7,err_8;
-    
-    perf_data = (struct PerfData *)malloc(sizeof(struct PerfData));    
-    
+
+    perf_data = (struct PerfData *)malloc(sizeof(struct PerfData));
+
 
     // Initialize thread map
     threads = perf_thread_map__new_dummy();
@@ -88,30 +216,29 @@ int test_stat_user_read(int events[]) {
     }
 
     perf_thread_map__set_pid(threads, 0, 0);
- 
-  
-    struct perf_event_attr attr_0 = {
-                .type	= PERF_TYPE_RAW,
-                .config	= events[0],
 
-                .config1 = 0x2,		// Request user access 
-/*#ifdef __aarch64__
-     .config1 = 0x2,		// Request user access 
-#endif */ 
-};
+    struct perf_event_attr attr_0 = {
+        .type       = PERF_TYPE_RAW,
+        .config     = events[0],
+
+        .config1    = 0x2,      // Request user access 
+        /*#ifdef __aarch64__
+        .config1 = 0x2,     // Request user access 
+        #endif */ 
+    };
 
     struct perf_event_attr attr_1 = {
-		.type	= PERF_TYPE_RAW,
-		.config	= events[1],
+        .type       = PERF_TYPE_RAW,
+        .config     = events[1],
 
-		.config1 = 0x2,		// Request user access 
-		/*#ifdef __aarch64__
-		  .config1 = 0x2,		// Request user access 
-#endif */ 
-	};
+        .config1    = 0x2,      // Request user access 
+        /*#ifdef __aarch64__
+        .config1 = 0x2,     // Request user access 
+        #endif */ 
+    };
 
 
-        // Create new event selector
+    // Create new event selector
     evsel_0 = perf_evsel__new(&attr_0);
     if (!evsel_0) {
         // Handle error
@@ -123,7 +250,7 @@ int test_stat_user_read(int events[]) {
         // Handle error
         return -1;
     }
-// Open event selector
+    // Open event selector
     err_0 = perf_evsel__open(evsel_0, NULL, threads);
     if (err_0) {
         // Handle error
@@ -167,274 +294,273 @@ int test_stat_user_read(int events[]) {
     count_data.global_count[0].val = count_0.val;
     count_data.global_count[1].val = count_1.val;
 
-if(num_events >= 3) {
-    struct perf_event_attr attr_2 = {
-		.type	= PERF_TYPE_RAW,
-		.config	= events[2],
+    if(num_events >= 3) {
+        struct perf_event_attr attr_2 = {
+            .type       = PERF_TYPE_RAW,
+            .config     = events[2],
 
-		.config1 = 0x2,		// Request user access 
-		/*#ifdef __aarch64__
-		  .config1 = 0x2,		// Request user access 
-#endif */ 
-	};
-    evsel_2 = perf_evsel__new(&attr_2);
-    if (!evsel_2) {
-        // Handle error
-        return -1;
+            .config1    = 0x2,      // Request user access 
+            /*#ifdef __aarch64__
+            .config1 = 0x2,     // Request user access 
+            #endif */ 
+        };
+        evsel_2 = perf_evsel__new(&attr_2);
+        if (!evsel_2) {
+            // Handle error
+            return -1;
+        }
+
+        err_2 = perf_evsel__open(evsel_2, NULL, threads);
+        if (err_2) {
+            // Handle error
+            return -1;
+        }
+
+        err_2 = perf_evsel__mmap(evsel_2, 0);
+        if (err_2) {
+            // Handle error
+            return -1;
+        }
+
+        pc_2 = perf_evsel__mmap_base(evsel_2, 0, 0);
+        if (!pc_2) {
+            // Handle error
+            return -1;
+        }
+
+        perf_data->global_evsel[2] = evsel_2;
+        count_data.global_count[2] = count_2;
+        count_data.global_count[2].val = count_2.val;
+    } 
+    if(num_events >= 4) {
+        struct perf_event_attr attr_3 = {
+            .type       = PERF_TYPE_RAW,
+            .config     = events[3],
+
+            .config1    = 0x2,      // Request user access 
+            /*#ifdef __aarch64__
+            .config1 = 0x2,     // Request user access 
+            #endif */ 
+        };
+        evsel_3 = perf_evsel__new(&attr_3);
+        if (!evsel_3) {
+            // Handle error
+            return -1;
+        }
+
+        err_3 = perf_evsel__open(evsel_3, NULL, threads);
+        if (err_3) {
+            // Handle error
+            return -1;
+        }
+
+        err_3 = perf_evsel__mmap(evsel_3, 0);
+        if (err_3) {
+            // Handle error
+            return -1;
+        }
+
+        pc_3 = perf_evsel__mmap_base(evsel_3, 0, 0);
+        if (!pc_3) {
+            // Handle error
+            return -1;
+        }
+
+        perf_data->global_evsel[3] = evsel_3;
+        count_data.global_count[3] = count_3;
+        count_data.global_count[3].val = count_3.val;
+    }
+    if(num_events >= 5) {
+        struct perf_event_attr attr_4 = {
+            .type       = PERF_TYPE_RAW,
+            .config     = events[4],
+
+            .config1    = 0x2,     // Request user access 
+            /*#ifdef __aarch64__
+            .config1 = 0x2,       // Request user access 
+            #endif */ 
+        };
+        evsel_4 = perf_evsel__new(&attr_4);
+        if (!evsel_4) {
+            // Handle error
+            return -1;
+        }
+
+        err_4 = perf_evsel__open(evsel_4, NULL, threads);
+        if (err_4) {
+            // Handle error
+            return -1;
+        }
+
+        err_4 = perf_evsel__mmap(evsel_4, 0);
+        if (err_4) {
+            // Handle error
+            return -1;
+        }
+
+        pc_4 = perf_evsel__mmap_base(evsel_4, 0, 0);
+        if (!pc_4) {
+            // Handle error
+            return -1;
+        }
+
+        perf_data->global_evsel[4] = evsel_4;
+        count_data.global_count[4] = count_4;
+        count_data.global_count[4].val = count_4.val;
+    }
+    if(num_events >= 6) {
+        struct perf_event_attr attr_5 = {
+            .type       = PERF_TYPE_RAW,
+            .config     = events[5],
+
+            .config1    = 0x2,     // Request user access 
+            /*#ifdef __aarch64__
+            .config1 = 0x2,       // Request user access 
+             #endif */ 
+        };
+        evsel_5 = perf_evsel__new(&attr_5);
+        if (!evsel_5) {
+            // Handle error
+            return -1;
+        }
+
+        err_5 = perf_evsel__open(evsel_5, NULL, threads);
+        if (err_5) {
+            // Handle error
+            return -1;
+        }
+
+        err_5 = perf_evsel__mmap(evsel_5, 0);
+        if (err_5) {
+            // Handle error
+            return -1;
+        }
+
+        pc_5 = perf_evsel__mmap_base(evsel_5, 0, 0);
+        if (!pc_5) {
+            // Handle error
+            return -1;
+        }
+
+        perf_data->global_evsel[5] = evsel_5;
+        count_data.global_count[5] = count_5;
+        count_data.global_count[5].val = count_5.val;
+    }
+    if(num_events >= 7) {
+        struct perf_event_attr attr_6 = {
+            .type       = PERF_TYPE_RAW,
+            .config     = events[6],
+
+            .config1    = 0x2,     // Request user access 
+            /*#ifdef __aarch64__
+            .config1 = 0x2,       // Request user access 
+            #endif */ 
+        };
+        evsel_6 = perf_evsel__new(&attr_6);
+        if (!evsel_6) {
+            // Handle error
+            return -1;
+        }
+
+        err_6 = perf_evsel__open(evsel_6, NULL, threads);
+        if (err_6) {
+            // Handle error
+            return -1;
+        }
+
+        err_6 = perf_evsel__mmap(evsel_6, 0);
+        if (err_6) {
+            // Handle error
+            return -1;
+        }
+
+        pc_6 = perf_evsel__mmap_base(evsel_6, 0, 0);
+        if (!pc_6) {
+            // Handle error
+            return -1;
+        }
+
+        perf_data->global_evsel[6] = evsel_6;
+        count_data.global_count[6] = count_6;
+        count_data.global_count[6].val = count_6.val;
+    }
+    if(num_events >= 8) {
+        struct perf_event_attr attr_7 = {
+            .type       = PERF_TYPE_RAW,
+            .config     = events[7],
+
+            .config1    = 0x2,     // Request user access 
+            /*#ifdef __aarch64__
+            .config1 = 0x2,       // Request user access 
+            #endif */ 
+        };
+        evsel_7 = perf_evsel__new(&attr_7);
+        if (!evsel_7) {
+            // Handle error
+            return -1;
+        }
+
+        err_7 = perf_evsel__open(evsel_7, NULL, threads);
+        if (err_7) {
+            // Handle error
+            return -1;
+        }
+
+        err_7 = perf_evsel__mmap(evsel_7, 0);
+        if (err_7) {
+            // Handle error
+            return -1;
+        }
+
+        pc_7 = perf_evsel__mmap_base(evsel_7, 0, 0);
+        if (!pc_7) {
+            // Handle error
+            return -1;
+        }
+
+        perf_data->global_evsel[7] = evsel_7;
+        count_data.global_count[7] = count_7;
+        count_data.global_count[7].val = count_7.val;
     }
 
-    err_2 = perf_evsel__open(evsel_2, NULL, threads);
-    if (err_2) {
-        // Handle error
-        return -1;
-    }
-    
-    err_2 = perf_evsel__mmap(evsel_2, 0);
-    if (err_2) {
-        // Handle error
-        return -1;
-    }
+    if(num_events >= 9) {
+        struct perf_event_attr attr_8 = {
+            .type       = PERF_TYPE_RAW,
+            .config     = events[8],
 
-    pc_2 = perf_evsel__mmap_base(evsel_2, 0, 0);
-    if (!pc_2) {
-        // Handle error
-        return -1;
+            .config1    = 0x2,     // Request user access 
+            /*#ifdef __aarch64__
+            .config1 = 0x2,       // Request user access 
+            #endif */
+        };
+        evsel_8 = perf_evsel__new(&attr_8);
+        if (!evsel_8) {
+            // Handle error
+            return -1;
+        }
+
+        err_8 = perf_evsel__open(evsel_8, NULL, threads);
+        if (err_8) {
+            // Handle error
+            return -1;
+        }
+
+        err_8 = perf_evsel__mmap(evsel_8, 0);
+        if (err_8) {
+            // Handle error
+            return -1;
+        }
+
+        pc_8 = perf_evsel__mmap_base(evsel_8, 0, 0);
+        if (!pc_8) {
+            // Handle error
+            return -1;
+        }
+
+        perf_data->global_evsel[8] = evsel_8;
+        count_data.global_count[8] = count_8;
+        count_data.global_count[8].val = count_8.val;
     }
-
-    perf_data->global_evsel[2] = evsel_2;
-    count_data.global_count[2] = count_2;
-    count_data.global_count[2].val = count_2.val;
-} 
-if(num_events >= 4) {
-    struct perf_event_attr attr_3 = {
-		.type	= PERF_TYPE_RAW,
-		.config	= events[3],
-
-		.config1 = 0x2,		// Request user access 
-		/*#ifdef __aarch64__
-		  .config1 = 0x2,		// Request user access 
-#endif */ 
-	};
-    evsel_3 = perf_evsel__new(&attr_3);
-    if (!evsel_3) {
-        // Handle error
-        return -1;
-    }
-
-    err_3 = perf_evsel__open(evsel_3, NULL, threads);
-    if (err_3) {
-        // Handle error
-        return -1;
-    }
-    
-    err_3 = perf_evsel__mmap(evsel_3, 0);
-    if (err_3) {
-        // Handle error
-        return -1;
-    }
-
-    pc_3 = perf_evsel__mmap_base(evsel_3, 0, 0);
-    if (!pc_3) {
-        // Handle error
-        return -1;
-    }
-
-    perf_data->global_evsel[3] = evsel_3;
-    count_data.global_count[3] = count_3;
-    count_data.global_count[3].val = count_3.val;
-} 
-if(num_events >= 5) {
-    struct perf_event_attr attr_4 = {
-		.type	= PERF_TYPE_RAW,
-		.config	= events[4],
-
-		.config1 = 0x2,		// Request user access 
-		/*#ifdef __aarch64__
-		  .config1 = 0x2,		// Request user access 
-#endif */ 
-	};
-    evsel_4 = perf_evsel__new(&attr_4);
-    if (!evsel_4) {
-        // Handle error
-        return -1;
-    }
-
-    err_4 = perf_evsel__open(evsel_4, NULL, threads);
-    if (err_4) {
-        // Handle error
-        return -1;
-    }
-    
-    err_4 = perf_evsel__mmap(evsel_4, 0);
-    if (err_4) {
-        // Handle error
-        return -1;
-    }
-
-    pc_4 = perf_evsel__mmap_base(evsel_4, 0, 0);
-    if (!pc_4) {
-        // Handle error
-        return -1;
-    }
-
-    perf_data->global_evsel[4] = evsel_4;
-    count_data.global_count[4] = count_4;
-    count_data.global_count[4].val = count_4.val;
-} 
-if(num_events >= 6) {
-    struct perf_event_attr attr_5 = {
-		.type	= PERF_TYPE_RAW,
-		.config	= events[5],
-
-		.config1 = 0x2,		// Request user access 
-		/*#ifdef __aarch64__
-		  .config1 = 0x2,		// Request user access 
-#endif */ 
-	};
-    evsel_5 = perf_evsel__new(&attr_5);
-    if (!evsel_5) {
-        // Handle error
-        return -1;
-    }
-
-    err_5 = perf_evsel__open(evsel_5, NULL, threads);
-    if (err_5) {
-        // Handle error
-        return -1;
-    }
-    
-    err_5 = perf_evsel__mmap(evsel_5, 0);
-    if (err_5) {
-        // Handle error
-        return -1;
-    }
-
-    pc_5 = perf_evsel__mmap_base(evsel_5, 0, 0);
-    if (!pc_5) {
-        // Handle error
-        return -1;
-    }
-
-    perf_data->global_evsel[5] = evsel_5;
-    count_data.global_count[5] = count_5;
-    count_data.global_count[5].val = count_5.val;
-} 
-if(num_events >= 7) {
-    struct perf_event_attr attr_6 = {
-		.type	= PERF_TYPE_RAW,
-		.config	= events[6],
-
-		.config1 = 0x2,		// Request user access 
-		/*#ifdef __aarch64__
-		  .config1 = 0x2,		// Request user access 
-#endif */ 
-	};
-    evsel_6 = perf_evsel__new(&attr_6);
-    if (!evsel_6) {
-        // Handle error
-        return -1;
-    }
-
-    err_6 = perf_evsel__open(evsel_6, NULL, threads);
-    if (err_6) {
-        // Handle error
-        return -1;
-    }
-    
-    err_6 = perf_evsel__mmap(evsel_6, 0);
-    if (err_6) {
-        // Handle error
-        return -1;
-    }
-
-    pc_6 = perf_evsel__mmap_base(evsel_6, 0, 0);
-    if (!pc_6) {
-        // Handle error
-        return -1;
-    }
-
-    perf_data->global_evsel[6] = evsel_6;
-    count_data.global_count[6] = count_6;
-    count_data.global_count[6].val = count_6.val;
-} 
-if(num_events >= 8) {
-    struct perf_event_attr attr_7 = {
-		.type	= PERF_TYPE_RAW,
-		.config	= events[7],
-
-		.config1 = 0x2,		// Request user access 
-		/*#ifdef __aarch64__
-		  .config1 = 0x2,		// Request user access 
-#endif */ 
-	};
-    evsel_7 = perf_evsel__new(&attr_7);
-    if (!evsel_7) {
-        // Handle error
-        return -1;
-    }
-
-    err_7 = perf_evsel__open(evsel_7, NULL, threads);
-    if (err_7) {
-        // Handle error
-        return -1;
-    }
-    
-    err_7 = perf_evsel__mmap(evsel_7, 0);
-    if (err_7) {
-        // Handle error
-        return -1;
-    }
-
-    pc_7 = perf_evsel__mmap_base(evsel_7, 0, 0);
-    if (!pc_7) {
-        // Handle error
-        return -1;
-    }
-
-    perf_data->global_evsel[7] = evsel_7;
-    count_data.global_count[7] = count_7;
-    count_data.global_count[7].val = count_7.val;
-} 
-
-if(num_events >= 9) {
-    struct perf_event_attr attr_8 = {
-		.type	= PERF_TYPE_RAW,
-		.config	= events[8],
-
-		.config1 = 0x2,		// Request user access 
-		/*#ifdef __aarch64__
-		  .config1 = 0x2,		// Request user access 
-#endif */ 
-	};
-    evsel_8 = perf_evsel__new(&attr_8);
-    if (!evsel_8) {
-        // Handle error
-        return -1;
-    }
-
-    err_8 = perf_evsel__open(evsel_8, NULL, threads);
-    if (err_8) {
-        // Handle error
-        return -1;
-    }
-    
-    err_8 = perf_evsel__mmap(evsel_8, 0);
-    if (err_8) {
-        // Handle error
-        return -1;
-    }
-
-    pc_8 = perf_evsel__mmap_base(evsel_8, 0, 0);
-    if (!pc_8) {
-        // Handle error
-        return -1;
-    }
-
-    perf_data->global_evsel[8] = evsel_8;
-    count_data.global_count[8] = count_8;
-    count_data.global_count[8].val = count_8.val;
-} 
-    
     return 0;
 }
 
@@ -454,55 +580,46 @@ int test_evsel(int argc, char **argv, int event_vals[]) {
 //Instrumentation without local variable
 
 // START CYCLE
-uint64_t process_start_count(struct PerfData *perf_data, struct CountData *count_data) {                                           
-        
+uint64_t process_start_count(struct PerfData *perf_data, struct CountData *count_data) {
     if (perf_data != NULL && count_data != NULL) {
-    // Check if perf_data->global_evsel_0 is not NULL
-    if (perf_data->global_evsel[0] != NULL) {
-        // Accessing perf_data->global_evsel_0 is safe                                                                         
-        perf_evsel__read(perf_data->global_evsel[0], 0, 0, &count_data->global_count[0]);                                        
-    } else {
-        // Handle the case where perf_data->global_evsel_0 is NULL                                                             
-        // This might indicate an error in your program                                                                        
-        // You can print an error message or take appropriate action                                                           
-        printf("Error: perf_data->global_evsel_0 is NULL\n");                                                                  
-    }   
-        
- }  
-                                                                                                                               
-   for(uint64_t i =0; i < num_events; i++) {
+        // Check if perf_data->global_evsel_0 is not NULL
+        if (perf_data->global_evsel[0] != NULL) {
+            // Accessing perf_data->global_evsel_0 is safe
+            perf_evsel__read(perf_data->global_evsel[0], 0, 0, &count_data->global_count[0]);
+        } else {
+            // Handle the case where perf_data->global_evsel_0 is NULL
+            // This might indicate an error in your program
+            // You can print an error message or take appropriate action
+            printf("Error: perf_data->global_evsel_0 is NULL\n");
+        }
+    }
+    for(uint64_t i =0; i < num_events; i++) {
         perf_evsel__read(perf_data->global_evsel[i], 0, 0, &count_data->global_count[i]);
         event_counts[0].start_cnt[i] = count_data->global_count[i].val;
-}    
+    }
     return 0;
-}   
-
-
-
+}
 
 // START CYCLE
 //uint64_t get_start_count(struct PerfData *perf_data, struct CountData *count_data) {
 uint64_t get_start_count(struct PerfData *perf_data, struct CountData *count_data, const char* context, uint64_t index) { 
     if (perf_data != NULL && count_data != NULL) {
-    // Check if perf_data->global_evsel_0 is not NULL
-    if (perf_data->global_evsel[0] != NULL) {
-        // Accessing perf_data->global_evsel_0 is safe
-        perf_evsel__read(perf_data->global_evsel[0], 0, 0, &count_data->global_count[0]);
-    } else {
-        // Handle the case where perf_data->global_evsel_0 is NULL
-        // This might indicate an error in your program
-        // You can print an error message or take appropriate action
-        printf("Error: perf_data->global_evsel_0 is NULL\n");
+        // Check if perf_data->global_evsel_0 is not NULL
+        if (perf_data->global_evsel[0] != NULL) {
+            // Accessing perf_data->global_evsel_0 is safe
+            perf_evsel__read(perf_data->global_evsel[0], 0, 0, &count_data->global_count[0]);
+        } else {
+            // Handle the case where perf_data->global_evsel_0 is NULL
+            // This might indicate an error in your program
+            // You can print an error message or take appropriate action
+            printf("Error: perf_data->global_evsel_0 is NULL\n");
+        }
     }
-
- }
     event_counts[index].context = context;
     for(uint64_t i =0; i < num_events; i++) {
         perf_evsel__read(perf_data->global_evsel[i], 0, 0, &count_data->global_count[i]);
         event_counts[index].start_cnt[i] = count_data->global_count[i].val;
     }
-    
-
     return 0;
 }
 
@@ -514,7 +631,6 @@ uint64_t process_end_count(struct PerfData *perf_data, struct CountData *count_d
         perf_evsel__read(perf_data->global_evsel[i], 0, 0, &count_data->global_count[i]);
         event_counts[0].end_cnt[i] = count_data->global_count[i].val;
     }
-    
     return 0;
 }
 
@@ -533,14 +649,11 @@ uint64_t get_end_count(struct PerfData *perf_data, struct CountData *count_data,
 
 // SHUTDOWN API
 int shutdown_resources(struct PerfData *perf_data) {
-
     printf("Entering shutdown_resources\n");
-
     if (perf_data == NULL) {
         printf("perf_data is NULL\n");
         return -1; // Return an error code if perf_data is NULL
     }
-
     // Debugging statements for global_evsel_0
     printf("Cleaning up global_evsel_0\n");
     for(uint64_t i =0; i < num_events; i++){
@@ -555,7 +668,7 @@ int shutdown_resources(struct PerfData *perf_data) {
         perf_thread_map__put(global_threads);
         global_threads = NULL;
     }
-} 
+}
 
 int pmuv3_bundle_init(int num_bundles){
     if(num_bundles < 0 || num_bundles >= TOTAL_BUNDLE_NUM){
@@ -803,3 +916,51 @@ int main(int argc, char *argv[]){
 
 }
 */
+/*
+int main(int argc, char *argv[]){
+   // num_bundles = atoi(argv[1]);
+    int cur_bundle_no = 8;
+    pmuv3_bundle_init(cur_bundle_no);
+    //pmuv3_bundle_init(num_bundles);
+    
+   // __T("test evsel",!test_evsel(0, NULL, event_values));
+        int k = 0;
+        //get_start_count(perf_data, &count_data);
+        process_start_count(perf_data, &count_data);
+        //sleep(10); // Sleep for 10 seconds
+        while(k < 500000000) {
+             k++;
+        }
+        // After sleep, retrieve end counts for each event
+       // struct perf_counts_values endCounts[num_events];
+       // get_end_count(global_evsel, endCounts, num_events);
+
+        process_end_count(perf_data, &count_data);
+        // Print the count values for each event
+        /*for (size_t i = 0; i < num_events; i++) {
+            if(i==0)
+                printf("%s Count: %lu\n", event_names[i], end_0 - start_0);
+            else if (i==1)
+                    printf("%s Count: %lu\n",  event_names[i], end_1 - start_1);
+            else if (i==2)
+                    printf("%s Count: %lu\n",  event_names[i], end_2 - start_2);
+            else if (i==3)
+                    printf("%s Count: %lu\n",  event_names[i], end_3 - start_3);
+            else if (i==4)
+                    printf("%s Count: %lu\n",  event_names[i], end_4 - start_4);
+            else if (i==5)
+                    printf("%s Count: %lu\n",  event_names[i], end_5 - start_5);
+            else if (i==6)
+                    printf("%s Count: %lu\n",  event_names[i], end_6 - start_6);
+            else if (i==7)
+                printf("%s Count: %lu\n",  event_names[i], end_7 - start_7);
+            else
+                printf("%s Count: %lu\n",  event_names[i], end_8 - start_8);
+        }
+
+        // Shutdown resources
+        shutdown_resources(perf_data);
+         for(int k = 0; k < num_events; ++k) {
+        uint64_t diff = event_counts[0].end_cnt[k] - event_counts[0].start_cnt[k];
+        printf("End is %ld, Start is %ld, diff is %ld\n", event_counts[0].end_cnt[k], event_counts[0].start_cnt[k], diff);
+}}*/

@@ -26,6 +26,7 @@ uint64_t get_end_count(struct PerfData *perf_data, struct CountData *count_data,
 
 //SHUTDOWN API
 int shutdown_resources(struct PerfData *perf_data);
-uint64_t get_next_index();
+//uint64_t get_next_index();
+uint64_t get_next_index(void);
 
 #endif // PMUV3_BUNDLE_H

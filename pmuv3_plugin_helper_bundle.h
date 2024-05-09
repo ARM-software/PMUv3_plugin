@@ -81,8 +81,8 @@ extern struct perf_thread_map *global_threads;
 //extern uint64_t end_0,end_1,end_2,end_3,end_4,end_5,end_6,end_7;
 //extern std::stack<uint64_t> start_stack;
 struct PMUv3_Bundle_Data {
-    unsigned int start_cnt[MAX_EVENTS];   // Start count
-    unsigned int end_cnt[MAX_EVENTS];   // End count
+    uint64_t start_cnt[MAX_EVENTS];   // Start count
+    uint64_t end_cnt[MAX_EVENTS];   // End count
     const char* context;  // Context information
 };
 /*
@@ -110,6 +110,22 @@ typedef const struct{
     uint8_t event_value;
 }bundles; 
 
+extern bundles bundle0[];
+extern bundles bundle1[];
+extern bundles bundle2[];
+extern bundles bundle3[];
+extern bundles bundle4[];
+extern bundles bundle5[];
+extern bundles bundle6[];
+extern bundles bundle7[];
+extern bundles bundle8[];
+extern bundles bundle9[];
+extern bundles bundle10[];
+extern bundles bundle11[];
+extern bundles bundle12[];
+extern bundles bundle13[];
+extern bundles bundle14[];
+/*
 bundles bundle0[] = {
     {"CPU_CYCLES", 0x11},
     {"L1D_TLB_REFILL", 0x05},
@@ -237,5 +253,5 @@ bundles bundle14[] = {
     {"DMB_SPEC", 0x7E},
     {"VFP_SPEC", 0x75},
     {"INST_SPEC", 0x1B}
-};
+};*/
 #endif // PMUV3_INCLUDES_H_BUNDLE
