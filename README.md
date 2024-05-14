@@ -211,7 +211,7 @@ process_end_count(perf_data, &count_data);
 
 # TODO :  We need to include its definition in the header!
 5) Define this in a place after all instrumentation is done.
-process_single_chunk(cur_bundle_no);
+process_single_chunk(cur_bundles_no);
 6) Shutdown and release resource for Event Bundle Instrument
 
 shutdown_resources(perf_data);

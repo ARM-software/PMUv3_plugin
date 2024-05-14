@@ -12,7 +12,9 @@ void write_to_csv(int bundle_num, std::ofstream& outFile);
 void write_column_names_to_csv(int bundle_num, std::ofstream& outFile);
 void add_column_names_to_csv(int bundle_num, std::ofstream& outFile);
 //void process_data(int bundle_num);
+void append_to_csv(int bundle_num, std::ofstream& outFile);
 void process_data(int bundle_num, uint64_t index_test);
+void process_single_chunk(int bundle_num);
 void post_process(int bundle_num);
 //void push_to_start_stack(uint64_t num_events); 
 //}
