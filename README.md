@@ -1,4 +1,4 @@
-You can find the detailed documentation [here](Documentation-PMUV3_plugin).
+You can find the detailed documentation [here](PMUv3_plugin/Documentation-PMUV3_plugin).
 
 There is a way to measure profiling of the target application as a whole box, but sometime we need to add the insturumentation into the code itself to get more fine-grained and precise measurement of the funtions handling a specific task we are interested to know its performance. For that intention, we developed the PMUv3 Plugin to allow the users to do so.
 
