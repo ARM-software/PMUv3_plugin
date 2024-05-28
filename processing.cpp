@@ -10,7 +10,6 @@
 #include <iomanip>
 #include "processing.hpp"
 extern "C"{
-//#include "pmuv3_plugin.h"
 #include "pmuv3_plugin_bundle.h"
 }
 
@@ -38,7 +37,6 @@ uint64_t cycle_diff_0,cycle_diff_1,cycle_diff_2,cycle_diff_3,cycle_diff_4,cycle_
 std::ofstream open_csv_file(int bundle_num) {
     std::ofstream outFile;
     if (bundle_num >= 0 && bundle_num <= 14) {
-	std::cout << "printing within open_csv" << std::endl;
 
         std::string filename = "bundle" + std::to_string(bundle_num) + ".csv";
         outFile.open(filename);
@@ -53,8 +51,7 @@ std::ofstream open_csv_file(int bundle_num) {
     return outFile;
 }
 
-void process_data(int bundle_num, uint64_t index_test){
-	std::cout << "In process_data() bundle_num, index_test, num_events " << bundle_num << "," << index_test << "," << num_events << std::endl;
+void process_data(int bundle_num){
 generate_cycle_diff(num_events);
 std::ofstream outFile = open_csv_file(bundle_num);
 write_column_names_to_csv(bundle_num, outFile);
@@ -80,11 +77,8 @@ void process_single_chunk(int bundle_num){
 }
 
 void append_to_csv(int bundle_num, std::ofstream& outFile){
-    //std::cout << "cd_arr0 size is " << cd_arr0.size() << std::endl;
     for(size_t i = 0; i< cd_arr0.size(); ++i){
-        //std::cout << "printing within for cd_arr0" << cd_arr0[i] << i << std::endl;
         if(bundle_num == 0) {
-          //  std::cout << "printing cd_arr0" << cd_arr0[i] << i << std::endl;
             outFile << cd_arr0[i] << ","  << cd_arr1[i] << "," << cd_arr2[i] << ","  << cd_arr3[i] << "," << cd_arr4[i] << "," << cd_arr5[i] << "\n";
         }
         else if(bundle_num == 1) {
@@ -334,7 +328,6 @@ std::vector<const char*> context_arr;
 
 void generate_cycle_diff(int num_events) {
     for (int i = 0; i < global_index; ++i) {
-    //for (int i = 0; i < index_test; ++i) {
         context_arr.push_back(event_counts[i].context);
         for(int k = 0; k < num_events; ++k) {
             int64_t diff = event_counts[i].end_cnt[k] - event_counts[i].start_cnt[k];
@@ -368,7 +361,6 @@ void generate_cycle_diff(int num_events) {
                     }
         }
     }
-    //std::cout << " cd_arr SIZE is " << cd_arr0.size() << std::endl;
 }
 
 
@@ -405,7 +397,6 @@ void cycle_diff(int num_events) {
                     }   
         }   
        
-    //std::cout << " cd_arr SIZE is " << cd_arr0.size() << std::endl;
 }
 
 

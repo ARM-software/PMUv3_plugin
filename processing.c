@@ -89,8 +89,7 @@ FILE* open_csv_file(int bundle_num) {
     return outFile;
 }
 
-void process_data(int bundle_num, uint64_t index_test) {
-    printf("In process_data() bundle_num, index_test: %d, %ld\n", bundle_num, index_test);
+void process_data(int bundle_num) {
     generate_cycle_diff(num_events);
     FILE *outFile = open_csv_file(bundle_num);
     write_column_names_to_csv(bundle_num, outFile);
