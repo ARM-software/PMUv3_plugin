@@ -25,7 +25,7 @@
 #include "pmuv3_plugin_helper.h"
 
 //INITIALIZATION API
-int test_evsel(int argc, char **argv, int event_n);
+int init_api(int argc, char **argv, int event_n);
 int pmuv3_cycle_init();
 //START CYCLE API
 uint64_t get_start_count(struct perf_evsel *global_evsel, struct perf_counts_values *counts);

@@ -46,7 +46,7 @@ extern struct perf_counts_values global_counts;
 extern uint64_t eventnum;
 extern int event_names[];
 // Function declarations
-int test_stat_user_read(int event);
-int libperf_print_(enum libperf_print_level level, const char *fmt, va_list ap); //to resolve multiple definition linker error 
+int pmu_counter_read(int event);
+int custom_print(enum libperf_print_level level, const char *fmt, va_list ap); //to resolve multiple definition linker error 
 
 #endif // PMUV3_INCLUDES_H

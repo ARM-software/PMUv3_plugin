@@ -37,7 +37,7 @@ struct perf_thread_map *global_threads;
 struct perf_counts_values global_counts;
 
 #if 1
-int libperf_print_(enum libperf_print_level level,
+int custom_print(enum libperf_print_level level,
 			 const char *fmt, va_list ap)
 {
 	//return 0;
@@ -46,15 +46,15 @@ int libperf_print_(enum libperf_print_level level,
 #endif
 
 int pmuv3_cycle_init(){
- __T("test evsel", !test_evsel(0, NULL, event_names[eventnum]));
+ __T("init api", !init_api(0, NULL, event_names[eventnum]));
  return 0;
 }
 /*
 void pmuv3_cycle_init(){
- __T("test evsel", !test_evsel(0, NULL, event_names[eventnum]));
+ __T("init api", !init_api(0, NULL, event_names[eventnum]));
 }*/
 
-int test_stat_user_read(int event)
+int pmu_counter_read(int event)
 {
 	struct perf_counts_values counts = { .val = 0 };
 	struct perf_thread_map *threads;
@@ -98,12 +98,12 @@ int test_stat_user_read(int event)
 }
 
 // INIT FUNCTION 
-int test_evsel(int argc, char **argv, int event_n)
+int init_api(int argc, char **argv, int event_n)
 {
 	
         __T_START;
-	libperf_init(libperf_print_);
-        test_stat_user_read(event_n);
+	libperf_init(custom_print);
+        pmu_counter_read(event_n);
         __T_END;
         return tests_failed == 0 ? 0 : -1; 
 
