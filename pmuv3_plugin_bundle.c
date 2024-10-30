@@ -1,4 +1,20 @@
 /*
+ * MIT License
+ * Copyright (c) [Year] ARM-software
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ */
+
+/*
  * Performance Monitoring accessing PMUV3 counters
  * Author: Gayathri  Narayana Yegna Narayanan (gayathrinarayana.yegnanarayanan@arm.com)
  * Description: This plugin initializes performance monitoring for specific hardware events grouped into 15 bundles, reads cycle counts and cleans up the resources after that. 
@@ -154,7 +170,7 @@ uint64_t get_next_index(void) {
 }
 
 #if 1
-int libperf_print_(enum libperf_print_level level,
+int custom_print(enum libperf_print_level level,
         const char *fmt, va_list ap)
 {
     //return 0;
@@ -162,7 +178,7 @@ int libperf_print_(enum libperf_print_level level,
 }
 #endif
 
-int test_stat_user_read(int events[]) {
+int pmu_counter_read(int events[]) {
     //struct perf_counts_values counts[MAX_EVENTS] = {0}; // Array to store counts for each event
     struct perf_counts_values counts[MAX_EVENTS] = {0};
     struct perf_thread_map *threads;
@@ -226,10 +242,10 @@ int test_stat_user_read(int events[]) {
 
 
 // INIT FUNCTION
-int test_evsel(int argc, char **argv, int event_vals[]) {
+int init_api(int argc, char **argv, int event_vals[]) {
     __T_START;
-    libperf_init(libperf_print_);
-    if (test_stat_user_read(event_vals) != 0) {
+    libperf_init(custom_print);
+    if (pmu_counter_read(event_vals) != 0) {
         // Handle error
         return -1;
     }
@@ -382,5 +398,5 @@ int pmuv3_bundle_init(int num_bundles) {
             exit(1);
     }
 
-    __T("test evsel", !test_evsel(0, NULL, event_values));
+    __T("init api", !init_api(0, NULL, event_values));
 }

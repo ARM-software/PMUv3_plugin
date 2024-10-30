@@ -1,9 +1,27 @@
-#ifndef PMUV3_INCLUDES_H_BUNDLE
+/*
+ * MIT License
+ * Copyright (c) [Year] ARM-software
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ */
+
 /*
  * Performance Monitoring accessing PMUV3 counters
  * Author: Gayathri  Narayana Yegna Narayanan (gayathrinarayana.yegnanarayanan@arm.com)
  * Description: This plugin supports the initialization of performance monitoring for specific hardware events, reads cycle counts and cleans up the resources after that)
  */
+
+#ifndef PMUV3_INCLUDES_H_BUNDLE
+
 #define PMUV3_INCLUDES_H_BUNDLE
 #include <stdlib.h>
 #include <stdarg.h>
@@ -48,8 +66,9 @@ struct PMUv3_Bundle_Data {
 extern uint64_t global_index;
 extern struct PMUv3_Bundle_Data event_counts[10000];
 extern uint64_t eventnum;
-int test_stat_user_read(int events[]);
-int libperf_print_(enum libperf_print_level level, const char *fmt, va_list ap); //to resolve multiple definition linker error 
+int pmu_counter_read(int events[]);
+//int libperf_print_(enum libperf_print_level level, const char *fmt, va_list ap); //to resolve multiple definition linker error 
+int custom_print(enum libperf_print_level level, const char *fmt, va_list ap); //to resolve multiple definition linker error 
 
 // Bundle Groups
 typedef const struct{
