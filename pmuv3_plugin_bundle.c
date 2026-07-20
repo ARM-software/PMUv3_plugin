@@ -34,6 +34,8 @@ char **event_names=NULL;
 
 uint64_t start_0,start_1,start_2,start_3,start_4,start_5,start_6,start_7;
 uint64_t end_0,end_1,end_2,end_3,end_4,end_5,end_6,end_7;
+static int debug_direct_printed[MAX_EVENTS];
+static int debug_fallback_printed[MAX_EVENTS];
 
 bundles bundle0[] = {
     {"CPU_CYCLES", 0x11},
@@ -169,11 +171,88 @@ uint64_t get_next_index(void) {
     return global_index++;
 }
 
+static int pmuv3_read_direct(struct perf_event_mmap_page *pc, uint64_t *value)
+{
+#if !defined(__aarch64__)
+    (void)pc;
+    (void)value;
+    return -1;
+#else
+    if (pc == NULL || pc->cap_user_rdpmc == 0)
+        return -1;
+
+    uint32_t seq;
+    uint32_t index;
+    uint64_t offset;
+    uint16_t width;
+    uint64_t reg_value = 0;
+
+    do {
+        seq = pc->lock;
+        __atomic_thread_fence(__ATOMIC_ACQUIRE);
+
+        index = pc->index;
+        offset = pc->offset;
+        width = pc->pmc_width;
+
+        if (index == 0)
+            return -1;
+
+        uint32_t pmc_index = index - 1;
+        if (pmc_index == 31) {
+            asm volatile("mrs %0, pmccntr_el0" : "=r"(reg_value));
+        } else {
+            asm volatile("msr pmselr_el0, %0" : : "r"((uint64_t)pmc_index));
+            asm volatile("isb");
+            asm volatile("mrs %0, pmxevcntr_el0" : "=r"(reg_value));
+        }
+
+        __atomic_thread_fence(__ATOMIC_ACQUIRE);
+    } while (pc->lock != seq);
+
+    int64_t signed_count = (int64_t)reg_value;
+    if (width > 0 && width < 64) {
+        signed_count <<= (64 - width);
+        signed_count >>= (64 - width);
+    }
+
+    *value = (uint64_t)((int64_t)offset + signed_count);
+    return 0;
+#endif
+}
+
+static int pmuv3_read_event(uint64_t event_index, struct perf_counts_values *count)
+{
+    uint64_t value;
+    const char *debug = getenv("PMUV3_DEBUG_READ_PATH");
+
+    if (perf_data == NULL || count == NULL || event_index >= num_events)
+        return -1;
+
+    if (pmuv3_read_direct(perf_data->pc[event_index], &value) == 0) {
+        if (debug != NULL && debug[0] != '\0' && debug_direct_printed[event_index] == 0) {
+            fprintf(stderr, "PMUv3: event %" PRIu64 " using direct EL0 PMU read path\n",
+                    event_index);
+            debug_direct_printed[event_index] = 1;
+        }
+        count->val = value;
+        return 0;
+    }
+
+    if (debug != NULL && debug[0] != '\0' && debug_fallback_printed[event_index] == 0) {
+        fprintf(stderr, "PMUv3: event %" PRIu64 " using perf_evsel__read fallback path\n",
+                event_index);
+        debug_fallback_printed[event_index] = 1;
+    }
+    return perf_evsel__read(perf_data->global_evsel[event_index], 0, 0, count);
+}
+
 #if 1
 int custom_print(enum libperf_print_level level,
         const char *fmt, va_list ap)
 {
     //return 0;
+    (void)level;
     return vfprintf(stderr, fmt, ap);
 }
 #endif
@@ -184,7 +263,6 @@ int pmu_counter_read(int events[]) {
     struct perf_thread_map *threads;
     struct perf_evsel *evsels[MAX_EVENTS];
     struct perf_event_mmap_page *pcs[MAX_EVENTS];
-    struct perf_event_attr attr;
     int errs[MAX_EVENTS];
 
     perf_data = (struct PerfData *)malloc(sizeof(struct PerfData));
@@ -201,7 +279,7 @@ int pmu_counter_read(int events[]) {
     global_threads = threads;
 
     // Loop through events and initialize attributes, evsels, and counts
-    for (int i = 0; i < num_events; ++i) {
+    for (uint64_t i = 0; i < num_events; ++i) {
         struct perf_event_attr attr = {
             .type       = PERF_TYPE_RAW,
             .config     = events[i],
@@ -233,6 +311,7 @@ int pmu_counter_read(int events[]) {
         }
 
         perf_data->global_evsel[i] = evsels[i];
+        perf_data->pc[i] = pcs[i];
         count_data.global_count[i] = counts[i];
         count_data.global_count[i].val = counts[i].val;
     }
@@ -261,7 +340,7 @@ uint64_t process_start_count(struct CountData *count_data) {
         // Check if perf_data->global_evsel_0 is not NULL
         if (perf_data->global_evsel[0] != NULL) {
             // Accessing perf_data->global_evsel_0 is safe
-            perf_evsel__read(perf_data->global_evsel[0], 0, 0, &count_data->global_count[0]);
+            pmuv3_read_event(0, &count_data->global_count[0]);
         } else {
             // Handle the case where perf_data->global_evsel_0 is NULL
             // This might indicate an error in your program
@@ -270,7 +349,7 @@ uint64_t process_start_count(struct CountData *count_data) {
         }
     }
     for(uint64_t i =0; i < num_events; i++) {
-        perf_evsel__read(perf_data->global_evsel[i], 0, 0, &count_data->global_count[i]);
+        pmuv3_read_event(i, &count_data->global_count[i]);
         event_counts[0].start_cnt[i] = count_data->global_count[i].val;
     }
     return 0;
@@ -282,7 +361,7 @@ uint64_t get_start_count(struct CountData *count_data, const char* context, uint
         // Check if perf_data->global_evsel_0 is not NULL
         if (perf_data->global_evsel[0] != NULL) {
             // Accessing perf_data->global_evsel_0 is safe
-            perf_evsel__read(perf_data->global_evsel[0], 0, 0, &count_data->global_count[0]);
+            pmuv3_read_event(0, &count_data->global_count[0]);
         } else {
             // Handle the case where perf_data->global_evsel_0 is NULL
             // This might indicate an error in your program
@@ -292,7 +371,7 @@ uint64_t get_start_count(struct CountData *count_data, const char* context, uint
     }
     event_counts[index].context = context;
     for(uint64_t i =0; i < num_events; i++) {
-        perf_evsel__read(perf_data->global_evsel[i], 0, 0, &count_data->global_count[i]);
+        pmuv3_read_event(i, &count_data->global_count[i]);
         event_counts[index].start_cnt[i] = count_data->global_count[i].val;
     }
     return 0;
@@ -303,7 +382,7 @@ uint64_t get_start_count(struct CountData *count_data, const char* context, uint
 uint64_t process_end_count(struct CountData *count_data) {
     // Perform perf_evsel__read operation to get end count for the event at the given index
     for(uint64_t i =0; i < num_events; i++) {
-        perf_evsel__read(perf_data->global_evsel[i], 0, 0, &count_data->global_count[i]);
+        pmuv3_read_event(i, &count_data->global_count[i]);
         event_counts[0].end_cnt[i] = count_data->global_count[i].val;
     }
     return 0;
@@ -313,7 +392,7 @@ uint64_t process_end_count(struct CountData *count_data) {
 uint64_t get_end_count(struct CountData *count_data, const char* context, uint64_t index) {
 
     for(uint64_t i =0; i < num_events; i++) {
-        perf_evsel__read(perf_data->global_evsel[i], 0, 0, &count_data->global_count[i]);
+        pmuv3_read_event(i, &count_data->global_count[i]);
         event_counts[index].end_cnt[i] = count_data->global_count[i].val;
     }
     //array_index--;
@@ -336,6 +415,7 @@ int shutdown_resources() {
             perf_evsel__close(perf_data->global_evsel[i]);
             perf_evsel__delete(perf_data->global_evsel[i]);
             perf_data->global_evsel[i] = NULL;
+            perf_data->pc[i] = NULL;
         }
     }
     if (global_threads != NULL) {
@@ -343,6 +423,7 @@ int shutdown_resources() {
         global_threads = NULL;
     }
     free_bundle_memory();
+    return 0;
 }
 // Function to initialize a bundle
 void init_bundle(bundles* bundle) {
@@ -399,4 +480,5 @@ int pmuv3_bundle_init(int num_bundles) {
     }
 
     __T("init api", !init_api(0, NULL, event_values));
+    return 0;
 }
