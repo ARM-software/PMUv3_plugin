@@ -44,6 +44,7 @@
 
 struct PerfData{
     struct perf_evsel *global_evsel[MAX_EVENTS];
+    struct perf_event_mmap_page *pc[MAX_EVENTS];
 };
 extern struct PerfData *perf_data;
 
