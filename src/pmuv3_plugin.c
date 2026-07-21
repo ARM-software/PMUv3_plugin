@@ -41,6 +41,7 @@ int custom_print(enum libperf_print_level level,
 			 const char *fmt, va_list ap)
 {
 	//return 0;
+	(void)level;
 	return vfprintf(stderr, fmt, ap);
 }   
 #endif
@@ -69,9 +70,7 @@ int pmu_counter_read(int event)
 		  .config1 = 0x2,		// Request user access 
 #endif */
 	};
-	int err, i;
-
-	__u64 start, end, total = 0;
+	int err;
 
 	threads = perf_thread_map__new_dummy();
 	__T("failed to create threads", threads);
@@ -142,4 +141,3 @@ int shutdown_resources() {
 	}
 return 0;
 }
-

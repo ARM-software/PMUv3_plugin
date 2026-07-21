@@ -1,0 +1,10 @@
+out/
+*.o
+*.a
+*.so
+*.csv
+*.log
+*.out
+bundle*.csv
+core
+core.*
