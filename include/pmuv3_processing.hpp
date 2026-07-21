@@ -14,9 +14,11 @@
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
  */
 
-#ifndef PROCESSING_HPP
-#define PROCESSING_HPP
+#ifndef PMUV3_PROCESSING_HPP
+#define PMUV3_PROCESSING_HPP
 
+#include <cstdint>
+#include <fstream>
 #include <vector>
 #include <stack>
 // Declare functions
@@ -55,5 +57,4 @@ extern std::vector<int64_t> cd_arr_e6;
 //}
 #endif
 
-#endif // PROCESSING_HPP
-
+#endif // PMUV3_PROCESSING_HPP

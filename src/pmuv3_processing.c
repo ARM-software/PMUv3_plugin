@@ -20,8 +20,9 @@
 #include <getopt.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 #include "pmuv3_plugin_bundle.h"
-#include "processing.h"
+#include "pmuv3_processing.h"
 
 #define MAX_SIZE 10000
 
@@ -147,6 +148,10 @@ void post_process(int bundle_num) {
     free(cd_arr_e4);
     free(cd_arr_e5);
     free(cd_arr_e6);
+}
+
+void process_single_chunk(int bundle_num) {
+    post_process(bundle_num);
 }
 
 void add_column_names_to_csv(int bundle_num, FILE* outFile) {
@@ -359,10 +364,13 @@ void write_to_csv(int bundle_num, FILE* outFile) {
 
 void cycle_diff(int num_events) {
     for(int k = 0; k < num_events; ++k) {
-        uint64_t diff = event_counts[0].end_cnt[k] - event_counts[0].start_cnt[k];
-        printf("End is %ld, Start is %ld\n", event_counts[0].end_cnt[k], event_counts[0].start_cnt[k]);
-        if (diff < 0){
-            printf("End is %ld, Start is %ld\n", event_counts[0].end_cnt[k], event_counts[0].start_cnt[k]);
+        uint64_t start = event_counts[0].start_cnt[k];
+        uint64_t end = event_counts[0].end_cnt[k];
+        uint64_t diff = end - start;
+        printf("End is %" PRIu64 ", Start is %" PRIu64 "\n", end, start);
+        if (end < start) {
+            fprintf(stderr, "Counter wrapped for event index %d: end=%" PRIu64 " start=%" PRIu64 "\n",
+                    k, end, start);
         }
         switch (k) {
             case 0:
@@ -394,13 +402,18 @@ void cycle_diff(int num_events) {
 }
 
 void generate_cycle_diff(int num_events) {
-    for (int i = 0; i < global_index; ++i) {
+    for (uint64_t i = 0; i < global_index; ++i) {
         push_context(event_counts[i].context);
         for(int k = 0; k < num_events; ++k) {
-            uint64_t diff = event_counts[i].end_cnt[k] - event_counts[i].start_cnt[k];
-	    printf("End is %ld, Start is %ld, diff is %ld\n", event_counts[i].end_cnt[k], event_counts[i].start_cnt[k], diff);
-            if (diff < 0){
-                printf("End is %ld, Start is %ld\n", event_counts[i].end_cnt[k], event_counts[i].start_cnt[k]);
+            uint64_t start = event_counts[i].start_cnt[k];
+            uint64_t end = event_counts[i].end_cnt[k];
+            uint64_t diff = end - start;
+	    printf("End is %" PRIu64 ", Start is %" PRIu64 ", diff is %" PRIu64 "\n",
+                   end, start, diff);
+            if (end < start) {
+                fprintf(stderr, "Counter wrapped for context index %" PRIu64
+                        " event index %d: end=%" PRIu64 " start=%" PRIu64 "\n",
+                        i, k, end, start);
             }
             switch (k) {
                 case 0:

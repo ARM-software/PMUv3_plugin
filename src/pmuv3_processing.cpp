@@ -24,7 +24,7 @@
 #include <algorithm>
 #include <fstream> 
 #include <iomanip>
-#include "processing.hpp"
+#include "pmuv3_processing.hpp"
 extern "C"{
 #include "pmuv3_plugin_bundle.h"
 }
@@ -343,7 +343,7 @@ void write_to_csv(int bundle_num, std::ofstream& outFile){
 std::vector<const char*> context_arr;
 
 void generate_cycle_diff(int num_events) {
-    for (int i = 0; i < global_index; ++i) {
+    for (uint64_t i = 0; i < global_index; ++i) {
         context_arr.push_back(event_counts[i].context);
         for(int k = 0; k < num_events; ++k) {
             int64_t diff = event_counts[i].end_cnt[k] - event_counts[i].start_cnt[k];
@@ -414,6 +414,4 @@ void cycle_diff(int num_events) {
         }   
        
 }
-
-
 

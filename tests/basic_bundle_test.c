@@ -14,8 +14,8 @@
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
  */
 
-#include "/home/ubuntu/ut_integration/PMUv3_plugin/pmuv3_plugin_bundle.h"
-#include "/home/ubuntu/ut_integration/PMUv3_plugin/pmuv3_plugin_helper_bundle.h"
+#include "pmuv3_plugin_bundle.h"
+#include "pmuv3_plugin_helper_bundle.h"
 
 int main(int argc, char **argv){
   if (argc != 2) {
@@ -26,7 +26,7 @@ int main(int argc, char **argv){
     //int cur_bundle_no = 8;
     pmuv3_bundle_init(num_bundles);
     
-        int k = 0;
+        volatile int k = 0;
         process_start_count(&count_data);
         while(k < 500000000) {
              k++;
@@ -39,7 +39,7 @@ int main(int argc, char **argv){
         uint64_t diff = event_counts[0].end_cnt[0] - event_counts[0].start_cnt[0];
         //uint64_t diff = event_counts[0].end_cnt[k] - event_counts[0].start_cnt[k];
         //printf("End is %ld, Start is %ld, diff is %ld\n", event_counts[0].end_cnt[k], event_counts[0].start_cnt[k], diff);
-        printf("End is %ld, Start is %ld, CPU_CYCLES is %ld\n", event_counts[0].end_cnt[0], event_counts[0].start_cnt[0], diff);
+        printf("End is %" PRIu64 ", Start is %" PRIu64 ", CPU_CYCLES is %" PRIu64 "\n",
+               event_counts[0].end_cnt[0], event_counts[0].start_cnt[0], diff);
 //}
 }
-
