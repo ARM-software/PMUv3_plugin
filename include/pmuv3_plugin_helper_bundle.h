@@ -45,10 +45,13 @@ extern "C" {
 #endif
 
 #define MAX_EVENTS 7
+#define PMUV3_MAX_REGIONS 10000
 
 struct PerfData{
     struct perf_evsel *global_evsel[MAX_EVENTS];
-    struct perf_event_mmap_page *pc[MAX_EVENTS];
+    struct perf_event_mmap_page **pc;
+    int nthreads;
+    struct perf_thread_map *threads;
 };
 extern struct PerfData *perf_data;
 
@@ -57,10 +60,10 @@ struct CountData{
     struct perf_counts_values global_count[MAX_EVENTS];
 };
 extern struct CountData count_data;
-#define TOTAL_BUNDLE_NUM 15
+#define TOTAL_BUNDLE_NUM 19
 extern uint64_t num_events;
 extern int num_bundles;
-extern int *event_values;
+extern uint32_t *event_values;
 extern char **event_names;
 extern struct perf_thread_map *global_threads;
 struct PMUv3_Bundle_Data {
@@ -69,16 +72,16 @@ struct PMUv3_Bundle_Data {
     const char* context;  // Context information
 };
 extern uint64_t global_index;
-extern struct PMUv3_Bundle_Data event_counts[10000];
+extern struct PMUv3_Bundle_Data event_counts[PMUV3_MAX_REGIONS];
 extern uint64_t eventnum;
-int pmu_counter_read(int events[]);
+int pmu_counter_read(const uint32_t events[]);
 //int libperf_print_(enum libperf_print_level level, const char *fmt, va_list ap); //to resolve multiple definition linker error 
 int custom_print(enum libperf_print_level level, const char *fmt, va_list ap); //to resolve multiple definition linker error 
 
 // Bundle Groups
 typedef const struct{
     const char *name;
-    uint8_t event_value;
+    uint32_t event_value;
 }bundles; 
 
 extern bundles bundle0[];
@@ -96,6 +99,10 @@ extern bundles bundle11[];
 extern bundles bundle12[];
 extern bundles bundle13[];
 extern bundles bundle14[];
+extern bundles bundle15[];
+extern bundles bundle16[];
+extern bundles bundle17[];
+extern bundles bundle18[];
 
 #ifdef __cplusplus
 }

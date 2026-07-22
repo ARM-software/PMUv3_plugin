@@ -30,6 +30,7 @@ LDLIBS += $(LIBPERF_A) $(LIBAPI_A) -lelf -lz -lpthread
 
 C_CORE_OBJ := $(BUILD_DIR)/pmuv3_plugin.o
 C_BUNDLE_OBJ := $(BUILD_DIR)/pmuv3_plugin_bundle.o
+C_THREAD_RUNTIME_OBJ := $(BUILD_DIR)/pmuv3_thread_runtime.o
 C_PROCESSING_OBJ := $(BUILD_DIR)/pmuv3_processing.o
 CXX_PROCESSING_OBJ := $(BUILD_DIR)/pmuv3_processing_cpp.o
 
@@ -73,43 +74,60 @@ libs: $(BUILD_DIR)/libpmuv3_plugin.a \
 tests: $(BUILD_DIR)/basic_bundle_test \
        $(BUILD_DIR)/c_single_region_test \
        $(BUILD_DIR)/c_multi_region_test \
+       $(BUILD_DIR)/c_multithread_test \
        $(BUILD_DIR)/cpp_single_region_test \
-       $(BUILD_DIR)/cpp_multi_region_test
+       $(BUILD_DIR)/cpp_multi_region_test \
+       $(BUILD_DIR)/cpp_multithread_test \
+       $(BUILD_DIR)/cpp_volatile_cycle_test \
+       $(BUILD_DIR)/measurement_overhead_test
 
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR) linux-libs
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/pmuv3_processing_cpp.o: $(SRC_DIR)/pmuv3_processing.cpp | $(BUILD_DIR)
+$(BUILD_DIR)/pmuv3_processing_cpp.o: $(SRC_DIR)/pmuv3_processing.cpp | $(BUILD_DIR) linux-libs
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/libpmuv3_plugin.a: $(C_CORE_OBJ) | $(BUILD_DIR)
 	$(AR) rcs $@ $^
 
-$(BUILD_DIR)/libpmuv3_plugin_bundle.a: $(C_BUNDLE_OBJ) $(C_PROCESSING_OBJ) | $(BUILD_DIR)
+$(BUILD_DIR)/libpmuv3_plugin_bundle.a: $(C_BUNDLE_OBJ) $(C_THREAD_RUNTIME_OBJ) $(C_PROCESSING_OBJ) | $(BUILD_DIR)
 	$(AR) rcs $@ $^
 
-$(BUILD_DIR)/libpmuv3_plugin_bundle.so: $(SRC_DIR)/pmuv3_plugin_bundle.c $(SRC_DIR)/pmuv3_processing.c | $(BUILD_DIR) linux-libs
+$(BUILD_DIR)/libpmuv3_plugin_bundle.so: $(SRC_DIR)/pmuv3_plugin_bundle.c $(SRC_DIR)/pmuv3_thread_runtime.c $(SRC_DIR)/pmuv3_processing.c | $(BUILD_DIR) linux-libs
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fPIC -c $(SRC_DIR)/pmuv3_plugin_bundle.c -o $(BUILD_DIR)/pmuv3_plugin_bundle.pic.o
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fPIC -c $(SRC_DIR)/pmuv3_thread_runtime.c -o $(BUILD_DIR)/pmuv3_thread_runtime.pic.o
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fPIC -c $(SRC_DIR)/pmuv3_processing.c -o $(BUILD_DIR)/pmuv3_processing.pic.o
-	$(CC) -shared -o $@ $(BUILD_DIR)/pmuv3_plugin_bundle.pic.o $(BUILD_DIR)/pmuv3_processing.pic.o $(LDLIBS)
+	$(CC) -shared -o $@ $(BUILD_DIR)/pmuv3_plugin_bundle.pic.o $(BUILD_DIR)/pmuv3_thread_runtime.pic.o $(BUILD_DIR)/pmuv3_processing.pic.o $(LDLIBS)
 
-$(BUILD_DIR)/basic_bundle_test: $(TEST_DIR)/basic_bundle_test.c $(C_BUNDLE_OBJ) | $(BUILD_DIR) linux-libs
-	$(CC) $(CPPFLAGS) $(CFLAGS) $< $(C_BUNDLE_OBJ) $(LDLIBS) -o $@
+$(BUILD_DIR)/basic_bundle_test: $(TEST_DIR)/basic_bundle_test.c $(C_BUNDLE_OBJ) $(C_THREAD_RUNTIME_OBJ) | $(BUILD_DIR) linux-libs
+	$(CC) $(CPPFLAGS) $(CFLAGS) $< $(C_BUNDLE_OBJ) $(C_THREAD_RUNTIME_OBJ) $(LDLIBS) -o $@
 
-$(BUILD_DIR)/c_single_region_test: $(TEST_DIR)/c_single_region_test.c $(C_BUNDLE_OBJ) $(C_PROCESSING_OBJ) | $(BUILD_DIR) linux-libs
-	$(CC) $(CPPFLAGS) $(CFLAGS) $< $(C_BUNDLE_OBJ) $(C_PROCESSING_OBJ) $(LDLIBS) -o $@
+$(BUILD_DIR)/c_single_region_test: $(TEST_DIR)/c_single_region_test.c $(C_BUNDLE_OBJ) $(C_THREAD_RUNTIME_OBJ) $(C_PROCESSING_OBJ) | $(BUILD_DIR) linux-libs
+	$(CC) $(CPPFLAGS) $(CFLAGS) $< $(C_BUNDLE_OBJ) $(C_THREAD_RUNTIME_OBJ) $(C_PROCESSING_OBJ) $(LDLIBS) -o $@
 
-$(BUILD_DIR)/c_multi_region_test: $(TEST_DIR)/c_multi_region_test.c $(C_BUNDLE_OBJ) $(C_PROCESSING_OBJ) | $(BUILD_DIR) linux-libs
-	$(CC) $(CPPFLAGS) $(CFLAGS) $< $(C_BUNDLE_OBJ) $(C_PROCESSING_OBJ) $(LDLIBS) -o $@
+$(BUILD_DIR)/c_multi_region_test: $(TEST_DIR)/c_multi_region_test.c $(C_BUNDLE_OBJ) $(C_THREAD_RUNTIME_OBJ) $(C_PROCESSING_OBJ) | $(BUILD_DIR) linux-libs
+	$(CC) $(CPPFLAGS) $(CFLAGS) $< $(C_BUNDLE_OBJ) $(C_THREAD_RUNTIME_OBJ) $(C_PROCESSING_OBJ) $(LDLIBS) -o $@
 
-$(BUILD_DIR)/cpp_single_region_test: $(TEST_DIR)/cpp_single_region_test.cpp $(C_BUNDLE_OBJ) $(CXX_PROCESSING_OBJ) | $(BUILD_DIR) linux-libs
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $< $(C_BUNDLE_OBJ) $(CXX_PROCESSING_OBJ) $(LDLIBS) -o $@
+$(BUILD_DIR)/c_multithread_test: $(TEST_DIR)/c_multithread_test.c $(C_BUNDLE_OBJ) $(C_THREAD_RUNTIME_OBJ) $(C_PROCESSING_OBJ) | $(BUILD_DIR) linux-libs
+	$(CC) $(CPPFLAGS) $(CFLAGS) $< $(C_BUNDLE_OBJ) $(C_THREAD_RUNTIME_OBJ) $(C_PROCESSING_OBJ) $(LDLIBS) -o $@
 
-$(BUILD_DIR)/cpp_multi_region_test: $(TEST_DIR)/cpp_multi_region_test.cpp $(C_BUNDLE_OBJ) $(CXX_PROCESSING_OBJ) | $(BUILD_DIR) linux-libs
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $< $(C_BUNDLE_OBJ) $(CXX_PROCESSING_OBJ) $(LDLIBS) -o $@
+$(BUILD_DIR)/cpp_single_region_test: $(TEST_DIR)/cpp_single_region_test.cpp $(C_BUNDLE_OBJ) $(C_THREAD_RUNTIME_OBJ) $(CXX_PROCESSING_OBJ) | $(BUILD_DIR) linux-libs
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $< $(C_BUNDLE_OBJ) $(C_THREAD_RUNTIME_OBJ) $(CXX_PROCESSING_OBJ) $(LDLIBS) -o $@
+
+$(BUILD_DIR)/cpp_multi_region_test: $(TEST_DIR)/cpp_multi_region_test.cpp $(C_BUNDLE_OBJ) $(C_THREAD_RUNTIME_OBJ) $(CXX_PROCESSING_OBJ) | $(BUILD_DIR) linux-libs
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $< $(C_BUNDLE_OBJ) $(C_THREAD_RUNTIME_OBJ) $(CXX_PROCESSING_OBJ) $(LDLIBS) -o $@
+
+$(BUILD_DIR)/cpp_multithread_test: $(TEST_DIR)/cpp_multithread_test.cpp $(C_BUNDLE_OBJ) $(C_THREAD_RUNTIME_OBJ) $(CXX_PROCESSING_OBJ) | $(BUILD_DIR) linux-libs
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $< $(C_BUNDLE_OBJ) $(C_THREAD_RUNTIME_OBJ) $(CXX_PROCESSING_OBJ) $(LDLIBS) -o $@
+
+$(BUILD_DIR)/cpp_volatile_cycle_test: $(TEST_DIR)/cpp_volatile_cycle_test.cpp $(C_BUNDLE_OBJ) $(C_THREAD_RUNTIME_OBJ) | $(BUILD_DIR) linux-libs
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $< $(C_BUNDLE_OBJ) $(C_THREAD_RUNTIME_OBJ) $(LDLIBS) -o $@
+
+$(BUILD_DIR)/measurement_overhead_test: $(TEST_DIR)/measurement_overhead_test.c $(C_BUNDLE_OBJ) $(C_THREAD_RUNTIME_OBJ) | $(BUILD_DIR) linux-libs
+	$(CC) $(CPPFLAGS) $(CFLAGS) $< $(C_BUNDLE_OBJ) $(C_THREAD_RUNTIME_OBJ) $(LDLIBS) -o $@
 
 clean:
 	rm -rf $(BUILD_DIR)

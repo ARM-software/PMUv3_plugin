@@ -1,446 +1,177 @@
 /*
  * MIT License
  * Copyright (c) [Year] ARM-software
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
  */
 
-#include <stdio.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <getopt.h>
-#include <stdlib.h>
-#include <string.h>
-#include <inttypes.h>
 #include "pmuv3_plugin_bundle.h"
 #include "pmuv3_processing.h"
 
-#define MAX_SIZE 10000
+#include <inttypes.h>
+#include <stdlib.h>
+#include <string.h>
 
-uint64_t *cd_arr0 = NULL;
-uint64_t *cd_arr1 = NULL;
-uint64_t *cd_arr2 = NULL;
-uint64_t *cd_arr3 = NULL;
-uint64_t *cd_arr4 = NULL;
-uint64_t *cd_arr5 = NULL;
-uint64_t *cd_arr6 = NULL;
+static uint64_t *multi_values[MAX_EVENTS];
+static uint64_t *single_values[MAX_EVENTS];
+static uint64_t multi_sizes[MAX_EVENTS];
+static uint64_t single_sizes[MAX_EVENTS];
+static char *contexts[PMUV3_MAX_REGIONS];
+static uint64_t context_count;
 
-uint64_t *cd_arr_e0 = NULL;
-uint64_t *cd_arr_e1 = NULL;
-uint64_t *cd_arr_e2 = NULL;
-uint64_t *cd_arr_e3 = NULL;
-uint64_t *cd_arr_e4 = NULL;
-uint64_t *cd_arr_e5 = NULL;
-uint64_t *cd_arr_e6 = NULL;
-const char *context_arr[MAX_SIZE];
-
-uint64_t arr_size0 = 0;
-uint64_t arr_size1 = 0;
-uint64_t arr_size2 = 0;
-uint64_t arr_size3 = 0;
-uint64_t arr_size4 = 0;
-uint64_t arr_size5 = 0;
-uint64_t arr_size6 = 0;
-uint64_t context_count = 0;
-uint64_t cycle_diff_0,cycle_diff_1,cycle_diff_2,cycle_diff_3,cycle_diff_4,cycle_diff_5,cycle_diff_6;
-
-// Function to add an element to the end of a specific array
-void pushback(uint64_t **arr, uint64_t *arr_size, uint64_t value) {
-    if (*arr_size == 0) {
-        *arr = (uint64_t *)malloc(sizeof(uint64_t));
-    } else {
-        *arr = (uint64_t *)realloc(*arr, (*arr_size + 1) * sizeof(uint64_t));
-    }
-
-    // Check if memory allocation succeeded
-    if (*arr == NULL) {
-        printf("Memory allocation failed\n");
+void pushback(uint64_t **array, uint64_t *size, uint64_t value)
+{
+    uint64_t *updated = realloc(*array, (*size + 1) * sizeof(**array));
+    if (updated == NULL) {
+        fprintf(stderr, "PMUv3: processing allocation failed\n");
         exit(EXIT_FAILURE);
     }
-    // Append the value to the array
-    (*arr)[(*arr_size)++] = value;
+    updated[(*size)++] = value;
+    *array = updated;
 }
 
-// Function to push a context string into the array
-void push_context(const char *context) {
-    if (context_count < MAX_SIZE) {
-        // Allocate memory for the context string
-        context_arr[context_count] = malloc(strlen(context) + 1);
-        if (context_arr[context_count] == NULL) {
-            fprintf(stderr, "Memory allocation failed\n");
-            exit(1);
-        }
+static void push_context(const char *context)
+{
+    if (context_count >= PMUV3_MAX_REGIONS)
+        return;
+    contexts[context_count] = strdup(context != NULL ? context : "unnamed_region");
+    if (contexts[context_count] == NULL) {
+        fprintf(stderr, "PMUv3: context allocation failed\n");
+        exit(EXIT_FAILURE);
+    }
+    context_count++;
+}
 
-        // Copy the context string into the allocated memory
-        strcpy((char *)context_arr[context_count], context);
+static void reset_processing_data(void)
+{
+    for (uint64_t i = 0; i < MAX_EVENTS; i++) {
+        free(multi_values[i]);
+        free(single_values[i]);
+        multi_values[i] = NULL;
+        single_values[i] = NULL;
+        multi_sizes[i] = 0;
+        single_sizes[i] = 0;
+    }
+    for (uint64_t i = 0; i < context_count; i++) {
+        free(contexts[i]);
+        contexts[i] = NULL;
+    }
+    context_count = 0;
+}
 
-        // Increment the context count
-        context_count++;
-    } else {
-        fprintf(stderr, "Context array is full\n");
+FILE *open_csv_file(int bundle_num)
+{
+    if (bundle_num < 0 || bundle_num >= TOTAL_BUNDLE_NUM) {
+        fprintf(stderr, "PMUv3: invalid bundle number %d\n", bundle_num);
+        return NULL;
+    }
+
+    char filename[32];
+    snprintf(filename, sizeof(filename), "bundle%d.csv", bundle_num);
+    FILE *output = fopen(filename, "w");
+    if (output == NULL)
+        perror("PMUv3: opening CSV");
+    return output;
+}
+
+static void write_event_header(FILE *output, int with_context)
+{
+    if (with_context)
+        fputs("CONTEXT", output);
+    for (uint64_t i = 0; i < num_events; i++)
+        fprintf(output, "%s%s", (with_context || i > 0) ? "," : "", event_names[i]);
+    fputc('\n', output);
+}
+
+void add_column_names_to_csv(int bundle_num, FILE *output)
+{
+    (void)bundle_num;
+    write_event_header(output, 0);
+}
+
+void write_column_names_to_csv(int bundle_num, FILE *output)
+{
+    (void)bundle_num;
+    write_event_header(output, 1);
+}
+
+void add_values_to_csv(int bundle_num, FILE *output)
+{
+    (void)bundle_num;
+    uint64_t rows = num_events > 0 ? single_sizes[0] : 0;
+    for (uint64_t row = 0; row < rows; row++) {
+        for (uint64_t event = 0; event < num_events; event++)
+            fprintf(output, "%s%" PRIu64, event > 0 ? "," : "",
+                    single_values[event][row]);
+        fputc('\n', output);
     }
 }
 
-// Function to open the CSV file corresponding to the bundle number
-FILE* open_csv_file(int bundle_num) {
-    FILE* outFile = NULL;
-    if (bundle_num >= 0 && bundle_num <= 14) {
-        char filename[20]; // Assuming maximum filename length is 20 characters
-        sprintf(filename, "bundle%d.csv", bundle_num);
-        outFile = fopen(filename, "w");
-        if (outFile == NULL) {
-            perror("Error opening CSV file");
-        }
-    } else {
-        fprintf(stderr, "Invalid bundle number: %d\n", bundle_num);
+void write_to_csv(int bundle_num, FILE *output)
+{
+    (void)bundle_num;
+    uint64_t rows = num_events > 0 ? multi_sizes[0] : 0;
+    for (uint64_t row = 0; row < rows; row++) {
+        fprintf(output, "%s", contexts[row]);
+        for (uint64_t event = 0; event < num_events; event++)
+            fprintf(output, ",%" PRIu64, multi_values[event][row]);
+        fputc('\n', output);
     }
-    return outFile;
 }
 
-void process_data(int bundle_num) {
-    generate_cycle_diff(num_events);
-    FILE *outFile = open_csv_file(bundle_num);
-    write_column_names_to_csv(bundle_num, outFile);
-    write_to_csv(bundle_num, outFile);
-    fclose(outFile);
-    free(cd_arr0);
-    free(cd_arr1);
-    free(cd_arr2);
-    free(cd_arr3);
-    free(cd_arr4);
-    free(cd_arr5);
-    free(cd_arr6);
-    free(cd_arr_e0);
-    free(cd_arr_e1);
-    free(cd_arr_e2);
-    free(cd_arr_e3);
-    free(cd_arr_e4);
-    free(cd_arr_e5);
-    free(cd_arr_e6);
+void cycle_diff(int event_count)
+{
+    for (int event = 0; event < event_count; event++) {
+        uint64_t start = event_counts[0].start_cnt[event];
+        uint64_t end = event_counts[0].end_cnt[event];
+        if (end < start)
+            fprintf(stderr,
+                    "PMUv3: counter wrapped for event %d: end=%" PRIu64
+                    " start=%" PRIu64 "\n", event, end, start);
+        pushback(&single_values[event], &single_sizes[event], end - start);
+    }
 }
 
-void post_process(int bundle_num) {
-    cycle_diff(num_events);
-    FILE *outFile = open_csv_file(bundle_num);
-    add_column_names_to_csv(bundle_num, outFile);
-    add_values_to_csv(bundle_num, outFile);
-    fclose(outFile);
-    free(cd_arr0);
-    free(cd_arr1);
-    free(cd_arr2);
-    free(cd_arr3);
-    free(cd_arr4);
-    free(cd_arr5);
-    free(cd_arr6);
-    free(cd_arr_e0);
-    free(cd_arr_e1);
-    free(cd_arr_e2);
-    free(cd_arr_e3);
-    free(cd_arr_e4);
-    free(cd_arr_e5);
-    free(cd_arr_e6);
+void generate_cycle_diff(int event_count)
+{
+    for (uint64_t row = 0; row < global_index; row++) {
+        push_context(event_counts[row].context);
+        for (int event = 0; event < event_count; event++) {
+            uint64_t start = event_counts[row].start_cnt[event];
+            uint64_t end = event_counts[row].end_cnt[event];
+            if (end < start)
+                fprintf(stderr,
+                        "PMUv3: counter wrapped for row %" PRIu64
+                        " event %d: end=%" PRIu64 " start=%" PRIu64 "\n",
+                        row, event, end, start);
+            pushback(&multi_values[event], &multi_sizes[event], end - start);
+        }
+    }
 }
 
-void process_single_chunk(int bundle_num) {
+void process_data(int bundle_num)
+{
+    generate_cycle_diff((int)num_events);
+    FILE *output = open_csv_file(bundle_num);
+    if (output != NULL) {
+        write_column_names_to_csv(bundle_num, output);
+        write_to_csv(bundle_num, output);
+        fclose(output);
+    }
+    reset_processing_data();
+}
+
+void post_process(int bundle_num)
+{
+    cycle_diff((int)num_events);
+    FILE *output = open_csv_file(bundle_num);
+    if (output != NULL) {
+        add_column_names_to_csv(bundle_num, output);
+        add_values_to_csv(bundle_num, output);
+        fclose(output);
+    }
+    reset_processing_data();
+}
+
+void process_single_chunk(int bundle_num)
+{
     post_process(bundle_num);
-}
-
-void add_column_names_to_csv(int bundle_num, FILE* outFile) {
-    if (bundle_num == 0) {
-        fprintf(outFile, "CPU_CYCLES,L1D_TLB_REFILL,L1D_TLB,L2D_TLB_REFILL,L2D_TLB,DTLB_WALK\n");
-    } else if (bundle_num == 1) {
-        fprintf(outFile, "CPU_CYCLES,L2D_TLB_REFILL_RD,L2D_TLB_REFILL_WR,L2D_TLB_RD,L2D_TLB_WR\n");
-    } else if (bundle_num == 2) {
-        fprintf(outFile, "CPU_CYCLES,MEM_ACCESS,BUS_ACCESS,MEMORY_ERROR\n");
-    } else if (bundle_num == 3) {
-        fprintf(outFile, "CPU_CYCLES,BR_MIS_PRED,BR_PRED,BR_RETIRED,BR_MIS_PRED_RETIRED,BR_IMMED_SPEC,BR_INDIRECT_SPEC\n");
-    } else if (bundle_num == 4) {
-        fprintf(outFile, "CPU_CYCLES,STALL_FRONTEND,STALL_BACKEND\n");
-    } else if (bundle_num == 5) {
-        fprintf(outFile, "CPU_CYCLES,L1I_CACHE_REFILL,L1I_CACHE\n");
-    } else if (bundle_num == 6) {
-        fprintf(outFile, "CPU_CYCLES,L1D_CACHE_REFILL,L1D_CACHE,L2D_CACHE,L2D_CACHE_REFILL,L3D_CACHE_REFILL,L3D_CACHE\n");
-    } else if (bundle_num == 7) {
-        fprintf(outFile, "CPU_CYCLES,L1I_TLB_REFILL,L1I_TLB,ITLB_WALK\n");
-    } else if (bundle_num == 8) {
-        fprintf(outFile, "CPU_CYCLES,INST_RETIRED,INST_SPEC,EXC_TAKEN,ST_SPEC,ASE_SPEC,PC_WRITE_SPEC\n");
-    } else if (bundle_num == 9) {
-        fprintf(outFile, "CPU_CYCLES,BR_RETURN_SPEC,BR_IMMED_SPEC,BR_INDIRECT_SPEC,INST_SPEC,LD_SPEC,DSB_SPEC\n");
-    } else if (bundle_num == 10) {
-        fprintf(outFile, "CPU_CYCLES,L1D_TLB_REFILL_RD,L1D_TLB_REFILL_WR,L1D_TLB_RD,L1D_TLB_WR\n");
-    } else if (bundle_num == 11) {
-        fprintf(outFile, "CPU_CYCLES,INST_RETIRED,LL_CACHE_MISS_RD,L1D_CACHE_REFILL,ITLB_WALK,L1I_CACHE_REFILL\n");
-    } else if (bundle_num == 12) {
-        fprintf(outFile, "CPU_CYCLES,INST_RETIRED,DTLB_WALK,BR_MIS_PRED_RETIRED,L2D_CACHE_REFILL\n");
-    } else if (bundle_num == 13) {
-        fprintf(outFile, "CPU_CYCLES,L1D_CACHE_REFILL_OUTER,L1D_CACHE_REFILL,L1D_CACHE_REFILL_RD,L1D_CACHE_RD,L1D_CACHE_REFILL_WR,L1D_CACHE_WR\n");
-    } else if (bundle_num == 14) {
-        fprintf(outFile, "CPU_CYCLES,CRYPTO_SPEC,ISB_SPEC,DP_SPEC,DMB_SPEC,VFP_SPEC,INST_SPEC\n");
-    }
-}
-void write_column_names_to_csv(int bundle_num, FILE *outFile) {
-    if(bundle_num == 0) {
-        fprintf(outFile, "CONTEXT,CPU_CYCLES,L1D_TLB_REFILL,L1D_TLB,L2D_TLB_REFILL,L2D_TLB,DTLB_WALK\n");
-    }
-    else if(bundle_num == 1) {
-        fprintf(outFile, "CONTEXT,CPU_CYCLES,L2D_TLB_REFILL_RD,L2D_TLB_REFILL_WR,L2D_TLB_RD,L2D_TLB_WR\n");
-    }
-    else if(bundle_num == 2) {
-        fprintf(outFile, "CONTEXT,CPU_CYCLES,MEM_ACCESS,BUS_ACCESS,MEMORY_ERROR\n");
-    }
-    else if(bundle_num == 3) {
-        fprintf(outFile, "CONTEXT,CPU_CYCLES,BR_MIS_PRED,BR_PRED,BR_RETIRED,BR_MIS_PRED_RETIRED,BR_IMMED_SPEC,BR_INDIRECT_SPEC\n");
-    }
-    else if(bundle_num == 4) {
-        fprintf(outFile, "CONTEXT,CPU_CYCLES,STALL_FRONTEND,STALL_BACKEND\n");
-    }
-    else if(bundle_num == 5) {
-        fprintf(outFile, "CONTEXT,CPU_CYCLES,L1I_CACHE_REFILL,L1I_CACHE\n");
-    }
-    else if(bundle_num == 6){
-        fprintf(outFile, "CONTEXT,CPU_CYCLES,L1D_CACHE_REFILL,L1D_CACHE,L2D_CACHE,L2D_CACHE_REFILL,L3D_CACHE_REFILL,L3D_CACHE\n");
-    }
-    else if(bundle_num == 7){
-        fprintf(outFile, "CONTEXT,CPU_CYCLES,L1I_TLB_REFILL,L1I_TLB,ITLB_WALK\n");
-    }
-    else if(bundle_num == 8){
-        fprintf(outFile, "CONTEXT,CPU_CYCLES,INST_RETIRED,INST_SPEC,EXC_TAKEN,ST_SPEC,ASE_SPEC,PC_WRITE_SPEC\n");
-    }
-    else if(bundle_num == 9){
-        fprintf(outFile, "CONTEXT,CPU_CYCLES,BR_RETURN_SPEC,BR_IMMED_SPEC,BR_INDIRECT_SPEC,INST_SPEC,LD_SPEC,DSB_SPEC\n");
-    }
-    else if(bundle_num == 10){
-        fprintf(outFile, "CONTEXT,CPU_CYCLES,L1D_TLB_REFILL_RD,L1D_TLB_REFILL_WR,L1D_TLB_RD,L1D_TLB_WR\n");
-    }
-    else if(bundle_num == 11){
-        fprintf(outFile, "CONTEXT,CPU_CYCLES,INST_RETIRED,LL_CACHE_MISS_RD,L1D_CACHE_REFILL,ITLB_WALK,L1I_CACHE_REFILL\n");
-    }
-    else if(bundle_num == 12){
-        fprintf(outFile, "CONTEXT,CPU_CYCLES,INST_RETIRED,DTLB_WALK,BR_MIS_PRED_RETIRED,L2D_CACHE_REFILL\n");
-    }
-    else if(bundle_num == 13){
-        fprintf(outFile, "CONTEXT,CPU_CYCLES,L1D_CACHE_REFILL_OUTER,L1D_CACHE_REFILL,L1D_CACHE_REFILL_RD,L1D_CACHE_RD,L1D_CACHE_REFILL_WR,L1D_CACHE_WR\n");
-    }
-    else if(bundle_num == 14){
-        fprintf(outFile, "CONTEXT,CPU_CYCLES,CRYPTO_SPEC,ISB_SPEC,DP_SPEC,DMB_SPEC,VFP_SPEC,INST_SPEC\n");
-    }
-}
-
-void add_values_to_csv(int bundle_num, FILE* outFile) {
-    for (size_t i = 0; i < arr_size0; ++i) {
-        if (bundle_num == 0) {
-            fprintf(outFile, "%ld,%ld,%ld,%ld,%ld,%ld\n",
-                    (long)cd_arr_e0[i], (long)cd_arr_e1[i], (long)cd_arr_e2[i],
-                    (long)cd_arr_e3[i], (long)cd_arr_e4[i], (long)cd_arr_e5[i]);
-        } else if (bundle_num == 1) {
-            fprintf(outFile, "%ld,%ld,%ld,%ld,%ld\n",
-                    (long)cd_arr_e0[i], (long)cd_arr_e1[i], (long)cd_arr_e2[i],
-                    (long)cd_arr_e3[i], (long)cd_arr_e4[i]);
-        } else if (bundle_num == 2) {
-            fprintf(outFile, "%ld,%ld,%ld,%ld\n",
-                    (long)cd_arr_e0[i], (long)cd_arr_e1[i], (long)cd_arr_e2[i], (long)cd_arr_e3[i]);
-        } else if (bundle_num == 3) {
-            fprintf(outFile, "%ld,%ld,%ld,%ld,%ld,%ld,%ld\n",
-                    (long)cd_arr_e0[i], (long)cd_arr_e1[i], (long)cd_arr_e2[i], (long)cd_arr_e3[i],
-                    (long)cd_arr_e4[i], (long)cd_arr_e5[i], (long)cd_arr_e6[i]);
-        } else if (bundle_num == 4) {
-            fprintf(outFile, "%ld,%ld,%ld\n",
-                    (long)cd_arr_e0[i], (long)cd_arr_e1[i], (long)cd_arr_e2[i]);
-        } else if (bundle_num == 5) {
-            fprintf(outFile, "%ld,%ld,%ld\n",
-                    (long)cd_arr_e0[i], (long)cd_arr_e1[i], (long)cd_arr_e2[i]);
-        } else if (bundle_num == 6) {
-            fprintf(outFile, "%ld,%ld,%ld,%ld,%ld,%ld,%ld\n",
-                    (long)cd_arr_e0[i], (long)cd_arr_e1[i], (long)cd_arr_e2[i], (long)cd_arr_e3[i],
-                    (long)cd_arr_e4[i], (long)cd_arr_e5[i], (long)cd_arr_e6[i]);
-        } else if (bundle_num == 7) {
-            fprintf(outFile, "%ld,%ld,%ld,%ld\n",
-                    (long)cd_arr_e0[i], (long)cd_arr_e1[i], (long)cd_arr_e2[i], (long)cd_arr_e3[i]);
-        } else if (bundle_num == 8) {
-            fprintf(outFile, "%ld,%ld,%ld,%ld,%ld,%ld,%ld\n",
-                    (long)cd_arr_e0[i], (long)cd_arr_e1[i], (long)cd_arr_e2[i], (long)cd_arr_e3[i],
-                    (long)cd_arr_e4[i], (long)cd_arr_e5[i], (long)cd_arr_e6[i]);
-        } else if (bundle_num == 9) {
-            fprintf(outFile, "%ld,%ld,%ld,%ld,%ld,%ld,%ld\n",
-                    (long)cd_arr_e0[i], (long)cd_arr_e1[i], (long)cd_arr_e2[i], (long)cd_arr_e3[i],
-                    (long)cd_arr_e4[i], (long)cd_arr_e5[i], (long)cd_arr_e6[i]);
-        } else if (bundle_num == 10) {
-            fprintf(outFile, "%ld,%ld,%ld,%ld,%ld\n",
-                    (long)cd_arr_e0[i], (long)cd_arr_e1[i], (long)cd_arr_e2[i], (long)cd_arr_e3[i], (long)cd_arr_e4[i]);
-        } else if (bundle_num == 11) {
-            fprintf(outFile, "%ld,%ld,%ld,%ld,%ld,%ld\n",
-                    (long)cd_arr_e0[i], (long)cd_arr_e1[i], (long)cd_arr_e2[i], (long)cd_arr_e3[i],
-                    (long)cd_arr_e4[i], (long)cd_arr_e5[i]);
-        } else if (bundle_num == 12) {
-            fprintf(outFile, "%ld,%ld,%ld,%ld,%ld\n",
-                    (long)cd_arr_e0[i], (long)cd_arr_e1[i], (long)cd_arr_e2[i], (long)cd_arr_e3[i],
-                    (long)cd_arr_e4[i]);
-        } else if (bundle_num == 13) {
-            fprintf(outFile, "%ld,%ld,%ld,%ld,%ld,%ld,%ld\n",
-                    (long)cd_arr_e0[i], (long)cd_arr_e1[i], (long)cd_arr_e2[i], (long)cd_arr_e3[i],
-                    (long)cd_arr_e4[i], (long)cd_arr_e5[i], (long)cd_arr_e6[i]);
-        } else if (bundle_num == 14) {
-            fprintf(outFile, "%ld,%ld,%ld,%ld,%ld,%ld,%ld\n",
-                    (long)cd_arr_e0[i], (long)cd_arr_e1[i], (long)cd_arr_e2[i], (long)cd_arr_e3[i],
-                    (long)cd_arr_e4[i], (long)cd_arr_e5[i], (long)cd_arr_e6[i]);
-        } else {
-            printf("Invalid bundle number: %d\n", bundle_num);
-        }
-    }
-}
-
-void write_to_csv(int bundle_num, FILE* outFile) {
-
-    for (uint64_t i = 0; i < arr_size0; ++i) {
-        if (bundle_num == 0) {
-            fprintf(outFile, "%s,%ld,%ld,%ld,%ld,%ld,%ld\n", context_arr[i],
-                (long)cd_arr0[i], (long)cd_arr1[i], (long)cd_arr2[i],
-                (long)cd_arr3[i], (long)cd_arr4[i], (long)cd_arr5[i]);
-        } else if (bundle_num == 1) {
-            fprintf(outFile, "%s,%ld,%ld,%ld,%ld,%ld\n", context_arr[i],
-                    (long)cd_arr0[i], (long)cd_arr1[i], (long)cd_arr2[i],
-                    (long)cd_arr3[i], (long)cd_arr4[i]);
-        } else if (bundle_num == 2) {
-            fprintf(outFile, "%s,%ld,%ld,%ld,%ld\n", context_arr[i],
-                    (long)cd_arr0[i], (long)cd_arr1[i], (long)cd_arr2[i], (long)cd_arr3[i]);
-        } else if (bundle_num == 3) {
-            fprintf(outFile, "%s,%ld,%ld,%ld,%ld,%ld,%ld,%ld\n", context_arr[i],
-                    (long)cd_arr0[i], (long)cd_arr1[i], (long)cd_arr2[i], (long)cd_arr3[i],
-                    (long)cd_arr4[i], (long)cd_arr5[i], (long)cd_arr6[i]);
-        } else if (bundle_num == 4) {
-            fprintf(outFile, "%s,%ld,%ld,%ld\n", context_arr[i],
-                    (long)cd_arr0[i], (long)cd_arr1[i], (long)cd_arr2[i]);
-        } else if (bundle_num == 5) {
-            fprintf(outFile, "%s,%ld,%ld,%ld\n", context_arr[i],
-                    (long)cd_arr0[i], (long)cd_arr1[i], (long)cd_arr2[i]);
-        } else if (bundle_num == 6) {
-            fprintf(outFile, "%s,%ld,%ld,%ld,%ld,%ld,%ld,%ld\n", context_arr[i],
-                    (long)cd_arr0[i], (long)cd_arr1[i], (long)cd_arr2[i], (long)cd_arr3[i],
-                    (long)cd_arr4[i], (long)cd_arr5[i], (long)cd_arr6[i]);
-        } else if (bundle_num == 7) {
-            fprintf(outFile, "%s,%ld,%ld,%ld,%ld\n", context_arr[i],
-                    (long)cd_arr0[i], (long)cd_arr1[i], (long)cd_arr2[i], (long)cd_arr3[i]);
-        } else if (bundle_num == 8) {
-            fprintf(outFile, "%s,%ld,%ld,%ld,%ld,%ld,%ld,%ld\n", context_arr[i],
-                    (long)cd_arr0[i], (long)cd_arr1[i], (long)cd_arr2[i], (long)cd_arr3[i],
-                    (long)cd_arr4[i], (long)cd_arr5[i], (long)cd_arr6[i]);
-        } else if (bundle_num == 9) {
-            fprintf(outFile, "%s,%ld,%ld,%ld,%ld,%ld,%ld,%ld\n", context_arr[i],
-                    (long)cd_arr0[i], (long)cd_arr1[i], (long)cd_arr2[i], (long)cd_arr3[i],
-                    (long)cd_arr4[i], (long)cd_arr5[i], (long)cd_arr6[i]);
-        } else if (bundle_num == 10) {
-            fprintf(outFile, "%s,%ld,%ld,%ld,%ld,%ld\n", context_arr[i],
-                    (long)cd_arr0[i], (long)cd_arr1[i], (long)cd_arr2[i], (long)cd_arr3[i], (long)cd_arr4[i]);
-        } else if (bundle_num == 11) {
-            fprintf(outFile, "%s,%ld,%ld,%ld,%ld,%ld,%ld\n", context_arr[i],
-                    (long)cd_arr0[i], (long)cd_arr1[i], (long)cd_arr2[i], (long)cd_arr3[i],
-                    (long)cd_arr4[i], (long)cd_arr5[i]);
-        } else if (bundle_num == 12) {
-            fprintf(outFile, "%s,%ld,%ld,%ld,%ld,%ld\n", context_arr[i],
-                    (long)cd_arr0[i], (long)cd_arr1[i], (long)cd_arr2[i], (long)cd_arr3[i],
-                    (long)cd_arr4[i]);
-        } else if (bundle_num == 13) {
-            fprintf(outFile, "%s,%ld,%ld,%ld,%ld,%ld,%ld,%ld\n", context_arr[i],
-                    (long)cd_arr0[i], (long)cd_arr1[i], (long)cd_arr2[i], (long)cd_arr3[i],
-                    (long)cd_arr4[i], (long)cd_arr5[i], (long)cd_arr6[i]);
-        } else if (bundle_num == 14) {
-            fprintf(outFile, "%s,%ld,%ld,%ld,%ld,%ld,%ld,%ld\n", context_arr[i],
-                    (long)cd_arr0[i], (long)cd_arr1[i], (long)cd_arr2[i], (long)cd_arr3[i],
-                    (long)cd_arr4[i], (long)cd_arr5[i], (long)cd_arr6[i]);
-        } else {
-            printf("Invalid bundle number: %d\n", bundle_num);
-        }
-    }
-}
-
-void cycle_diff(int num_events) {
-    for(int k = 0; k < num_events; ++k) {
-        uint64_t start = event_counts[0].start_cnt[k];
-        uint64_t end = event_counts[0].end_cnt[k];
-        uint64_t diff = end - start;
-        printf("End is %" PRIu64 ", Start is %" PRIu64 "\n", end, start);
-        if (end < start) {
-            fprintf(stderr, "Counter wrapped for event index %d: end=%" PRIu64 " start=%" PRIu64 "\n",
-                    k, end, start);
-        }
-        switch (k) {
-            case 0:
-                pushback(&cd_arr_e0, &arr_size0, diff);
-                break;
-            case 1:
-                pushback(&cd_arr_e1, &arr_size1, diff);
-                break;
-            case 2:
-                pushback(&cd_arr_e2, &arr_size2, diff);
-                break;
-            case 3:
-                pushback(&cd_arr_e3, &arr_size3, diff);
-                break;
-            case 4:
-                pushback(&cd_arr_e4, &arr_size4, diff);
-                break;
-            case 5:
-                pushback(&cd_arr_e5, &arr_size5, diff);
-                break;
-            case 6:
-                pushback(&cd_arr_e6, &arr_size6, diff);
-                break;
-            default:
-                fprintf(stderr, "Invalid index: %d\n", k);
-                break;
-        }
-    }
-}
-
-void generate_cycle_diff(int num_events) {
-    for (uint64_t i = 0; i < global_index; ++i) {
-        push_context(event_counts[i].context);
-        for(int k = 0; k < num_events; ++k) {
-            uint64_t start = event_counts[i].start_cnt[k];
-            uint64_t end = event_counts[i].end_cnt[k];
-            uint64_t diff = end - start;
-	    printf("End is %" PRIu64 ", Start is %" PRIu64 ", diff is %" PRIu64 "\n",
-                   end, start, diff);
-            if (end < start) {
-                fprintf(stderr, "Counter wrapped for context index %" PRIu64
-                        " event index %d: end=%" PRIu64 " start=%" PRIu64 "\n",
-                        i, k, end, start);
-            }
-            switch (k) {
-                case 0:
-                    pushback(&cd_arr0, &arr_size0, diff);
-                    break;
-                case 1:
-                    pushback(&cd_arr1, &arr_size1, diff);
-                    break;
-                case 2:
-                    pushback(&cd_arr2, &arr_size2, diff);
-                    break;
-                case 3:
-                    pushback(&cd_arr3, &arr_size3, diff);
-                    break;
-                case 4:
-                    pushback(&cd_arr4, &arr_size4, diff);
-                    break;
-                case 5:
-                    pushback(&cd_arr5, &arr_size5, diff);
-                    break;
-                case 6:
-                    pushback(&cd_arr6, &arr_size6, diff);
-                    break;
-                default:
-                    fprintf(stderr, "Invalid index: %d\n", k);
-                    break;
-            }
-        }
-    }
 }

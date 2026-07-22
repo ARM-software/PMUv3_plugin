@@ -2,40 +2,15 @@
  * MIT License
  * Copyright (c) [Year] ARM-software
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
- */
-
-/*
- * Performance Monitoring accessing PMUV3 counters
- * Author: Gayathri  Narayana Yegna Narayanan (gayathrinarayana.yegnanarayanan@arm.com)
- * Description: This plugin initializes performance monitoring for specific hardware events grouped into 15 bundles, reads cycle counts and cleans up the resources after that. 
+ * Performance Monitoring accessing PMUv3 counters.
  */
 
 #include "pmuv3_plugin_bundle.h"
 
-int tests_failed;
-int tests_verbose;
-struct PerfData *perf_data;
-struct CountData count_data;
-struct perf_thread_map *global_threads;
 int num_bundles;
-uint64_t num_events; 
-int *event_values = NULL;
-char **event_names=NULL;
-
-uint64_t start_0,start_1,start_2,start_3,start_4,start_5,start_6,start_7;
-uint64_t end_0,end_1,end_2,end_3,end_4,end_5,end_6,end_7;
-static int debug_direct_printed[MAX_EVENTS];
-static int debug_fallback_printed[MAX_EVENTS];
+uint64_t num_events;
+uint32_t *event_values;
+char **event_names;
 
 bundles bundle0[] = {
     {"CPU_CYCLES", 0x11},
@@ -43,7 +18,7 @@ bundles bundle0[] = {
     {"L1D_TLB", 0x25},
     {"L2D_TLB_REFILL", 0x2D},
     {"L2D_TLB", 0x2F},
-    {"DTLB_WALK", 0x34}
+    {"DTLB_WALK", 0x34},
 };
 
 bundles bundle1[] = {
@@ -51,14 +26,14 @@ bundles bundle1[] = {
     {"L2D_TLB_REFILL_RD", 0x5C},
     {"L2D_TLB_REFILL_WR", 0x5D},
     {"L2D_TLB_RD", 0x5E},
-    {"L2D_TLB_WR", 0x5F}
+    {"L2D_TLB_WR", 0x5F},
 };
 
 bundles bundle2[] = {
     {"CPU_CYCLES", 0x11},
     {"MEM_ACCESS", 0x13},
     {"BUS_ACCESS", 0x19},
-    {"MEMORY_ERROR", 0x1A}
+    {"MEMORY_ERROR", 0x1A},
 };
 
 bundles bundle3[] = {
@@ -68,20 +43,22 @@ bundles bundle3[] = {
     {"BR_RETIRED", 0x21},
     {"BR_MIS_PRED_RETIRED", 0x22},
     {"BR_IMMED_SPEC", 0x78},
-    //{"BR_RETURN_SPEC", 0x79},
-    {"BR_INDIRECT_SPEC", 0x7A}
+    {"BR_INDIRECT_SPEC", 0x7A},
 };
 
 bundles bundle4[] = {
     {"CPU_CYCLES", 0x11},
     {"STALL_FRONTEND", 0x23},
-    {"STALL_BACKEND", 0x24}
+    {"STALL_BACKEND", 0x24},
+    {"STALL_SLOT_FRONTEND", 0x3E},
+    {"STALL_SLOT_BACKEND", 0x3D},
+    {"STALL_BACKEND_MEM", 0x4005},
 };
 
 bundles bundle5[] = {
     {"CPU_CYCLES", 0x11},
     {"L1I_CACHE_REFILL", 0x01},
-    {"L1I_CACHE", 0x14}
+    {"L1I_CACHE", 0x14},
 };
 
 bundles bundle6[] = {
@@ -98,7 +75,7 @@ bundles bundle7[] = {
     {"CPU_CYCLES", 0x11},
     {"L1I_TLB_REFILL", 0x02},
     {"L1I_TLB", 0x26},
-    {"ITLB_WALK", 0x35}
+    {"ITLB_WALK", 0x35},
 };
 
 bundles bundle8[] = {
@@ -108,7 +85,7 @@ bundles bundle8[] = {
     {"EXC_TAKEN", 0x09},
     {"ST_SPEC", 0x71},
     {"ASE_SPEC", 0x74},
-    {"PC_WRITE_SPEC", 0x76}
+    {"PC_WRITE_SPEC", 0x76},
 };
 
 bundles bundle9[] = {
@@ -126,7 +103,7 @@ bundles bundle10[] = {
     {"L1D_TLB_REFILL_RD", 0x4C},
     {"L1D_TLB_REFILL_WR", 0x4D},
     {"L1D_TLB_RD", 0x4E},
-    {"L1D_TLB_WR", 0x4F}
+    {"L1D_TLB_WR", 0x4F},
 };
 
 bundles bundle11[] = {
@@ -143,7 +120,7 @@ bundles bundle12[] = {
     {"INST_RETIRED", 0x08},
     {"DTLB_WALK", 0x34},
     {"BR_MIS_PRED_RETIRED", 0x22},
-    {"L2D_CACHE_REFILL", 0x17}
+    {"L2D_CACHE_REFILL", 0x17},
 };
 
 bundles bundle13[] = {
@@ -153,7 +130,7 @@ bundles bundle13[] = {
     {"L1D_CACHE_REFILL_RD", 0x42},
     {"L1D_CACHE_RD", 0x40},
     {"L1D_CACHE_REFILL_WR", 0x43},
-    {"L1D_CACHE_WR", 0x41}
+    {"L1D_CACHE_WR", 0x41},
 };
 
 bundles bundle14[] = {
@@ -163,322 +140,124 @@ bundles bundle14[] = {
     {"DP_SPEC", 0x73},
     {"DMB_SPEC", 0x7E},
     {"VFP_SPEC", 0x75},
-    {"INST_SPEC", 0x1B}
+    {"INST_SPEC", 0x1B},
 };
-struct PMUv3_Bundle_Data event_counts[10000];
-uint64_t global_index = 0;
-uint64_t get_next_index(void) {
-    return global_index++;
-}
 
-static int pmuv3_read_direct(struct perf_event_mmap_page *pc, uint64_t *value)
+bundles bundle15[] = {
+    {"CPU_CYCLES", 0x11},
+    {"SVE_INST_SPEC", 0x8006},
+    {"SVE_PRED_SPEC", 0x8074},
+    {"SVE_PRED_EMPTY_SPEC", 0x8075},
+    {"SVE_PRED_FULL_SPEC", 0x8076},
+    {"SVE_PRED_PARTIAL_SPEC", 0x8077},
+};
+
+bundles bundle16[] = {
+    {"CPU_CYCLES", 0x11},
+    {"BUS_ACCESS_RD", 0x60},
+    {"BUS_ACCESS_WR", 0x61},
+    {"MEM_ACCESS_RD", 0x66},
+    {"MEM_ACCESS_WR", 0x67},
+};
+
+bundles bundle17[] = {
+    {"CPU_CYCLES", 0x11},
+    {"LL_CACHE_RD", 0x36},
+    {"LL_CACHE_MISS_RD", 0x37},
+    {"FP_SCALE_OPS_SPEC", 0x80C0},
+    {"FP_FIXED_OPS_SPEC", 0x80C1},
+};
+
+bundles bundle18[] = {
+    {"OP_RETIRED", 0x3A},
+    {"OP_SPEC", 0x3B},
+    {"STALL_SLOT", 0x3F},
+    {"CPU_CYCLES", 0x11},
+    {"STALL_SLOT_FRONTEND", 0x3E},
+    {"STALL_SLOT_BACKEND", 0x3D},
+    {"BR_MIS_PRED", 0x10},
+};
+
+struct BundleDefinition {
+    bundles *events;
+    size_t count;
+};
+
+#define BUNDLE_DEFINITION(number) \
+    { bundle##number, sizeof(bundle##number) / sizeof(bundle##number[0]) }
+
+static const struct BundleDefinition bundle_definitions[TOTAL_BUNDLE_NUM] = {
+    BUNDLE_DEFINITION(0),
+    BUNDLE_DEFINITION(1),
+    BUNDLE_DEFINITION(2),
+    BUNDLE_DEFINITION(3),
+    BUNDLE_DEFINITION(4),
+    BUNDLE_DEFINITION(5),
+    BUNDLE_DEFINITION(6),
+    BUNDLE_DEFINITION(7),
+    BUNDLE_DEFINITION(8),
+    BUNDLE_DEFINITION(9),
+    BUNDLE_DEFINITION(10),
+    BUNDLE_DEFINITION(11),
+    BUNDLE_DEFINITION(12),
+    BUNDLE_DEFINITION(13),
+    BUNDLE_DEFINITION(14),
+    BUNDLE_DEFINITION(15),
+    BUNDLE_DEFINITION(16),
+    BUNDLE_DEFINITION(17),
+    BUNDLE_DEFINITION(18),
+};
+
+void free_bundle_memory(void)
 {
-#if !defined(__aarch64__)
-    (void)pc;
-    (void)value;
-    return -1;
-#else
-    if (pc == NULL || pc->cap_user_rdpmc == 0)
-        return -1;
-
-    uint32_t seq;
-    uint32_t index;
-    uint64_t offset;
-    uint16_t width;
-    uint64_t reg_value = 0;
-
-    do {
-        seq = pc->lock;
-        __atomic_thread_fence(__ATOMIC_ACQUIRE);
-
-        index = pc->index;
-        offset = pc->offset;
-        width = pc->pmc_width;
-
-        if (index == 0)
-            return -1;
-
-        uint32_t pmc_index = index - 1;
-        if (pmc_index == 31) {
-            asm volatile("mrs %0, pmccntr_el0" : "=r"(reg_value));
-        } else {
-            asm volatile("msr pmselr_el0, %0" : : "r"((uint64_t)pmc_index));
-            asm volatile("isb");
-            asm volatile("mrs %0, pmxevcntr_el0" : "=r"(reg_value));
-        }
-
-        __atomic_thread_fence(__ATOMIC_ACQUIRE);
-    } while (pc->lock != seq);
-
-    int64_t signed_count = (int64_t)reg_value;
-    if (width > 0 && width < 64) {
-        signed_count <<= (64 - width);
-        signed_count >>= (64 - width);
-    }
-
-    *value = (uint64_t)((int64_t)offset + signed_count);
-    return 0;
-#endif
-}
-
-static int pmuv3_read_event(uint64_t event_index, struct perf_counts_values *count)
-{
-    uint64_t value;
-    const char *debug = getenv("PMUV3_DEBUG_READ_PATH");
-
-    if (perf_data == NULL || count == NULL || event_index >= num_events)
-        return -1;
-
-    if (pmuv3_read_direct(perf_data->pc[event_index], &value) == 0) {
-        if (debug != NULL && debug[0] != '\0' && debug_direct_printed[event_index] == 0) {
-            fprintf(stderr, "PMUv3: event %" PRIu64 " using direct EL0 PMU read path\n",
-                    event_index);
-            debug_direct_printed[event_index] = 1;
-        }
-        count->val = value;
-        return 0;
-    }
-
-    if (debug != NULL && debug[0] != '\0' && debug_fallback_printed[event_index] == 0) {
-        fprintf(stderr, "PMUv3: event %" PRIu64 " using perf_evsel__read fallback path\n",
-                event_index);
-        debug_fallback_printed[event_index] = 1;
-    }
-    return perf_evsel__read(perf_data->global_evsel[event_index], 0, 0, count);
-}
-
-#if 1
-int custom_print(enum libperf_print_level level,
-        const char *fmt, va_list ap)
-{
-    //return 0;
-    (void)level;
-    return vfprintf(stderr, fmt, ap);
-}
-#endif
-
-int pmu_counter_read(int events[]) {
-    //struct perf_counts_values counts[MAX_EVENTS] = {0}; // Array to store counts for each event
-    struct perf_counts_values counts[MAX_EVENTS] = {0};
-    struct perf_thread_map *threads;
-    struct perf_evsel *evsels[MAX_EVENTS];
-    struct perf_event_mmap_page *pcs[MAX_EVENTS];
-    int errs[MAX_EVENTS];
-
-    perf_data = (struct PerfData *)malloc(sizeof(struct PerfData));
-
-
-    // Initialize thread map
-    threads = perf_thread_map__new_dummy();
-    if (!threads) {
-        // Handle error
-        return -1;
-    }
-
-    perf_thread_map__set_pid(threads, 0, 0);
-    global_threads = threads;
-
-    // Loop through events and initialize attributes, evsels, and counts
-    for (uint64_t i = 0; i < num_events; ++i) {
-        struct perf_event_attr attr = {
-            .type       = PERF_TYPE_RAW,
-            .config     = events[i],
-            .config1    = 0x2 // Request user access
-        };
-
-        evsels[i] = perf_evsel__new(&attr);
-        if (!evsels[i]) {
-            // Handle error
-            return -1;
-        }
-
-        errs[i] = perf_evsel__open(evsels[i], NULL, threads);
-        if (errs[i]) {
-            // Handle error
-            return -1;
-        }
-
-        errs[i] = perf_evsel__mmap(evsels[i], 0);
-        if (errs[i]) {
-            // Handle error
-            return -1;
-        }
-
-        pcs[i] = perf_evsel__mmap_base(evsels[i], 0, 0);
-        if (!pcs[i]) {
-            // Handle error
-            return -1;
-        }
-
-        perf_data->global_evsel[i] = evsels[i];
-        perf_data->pc[i] = pcs[i];
-        count_data.global_count[i] = counts[i];
-        count_data.global_count[i].val = counts[i].val;
-    }
-
-    return 0;
-}
-
-
-// INIT FUNCTION
-int init_api(int argc, char **argv, int event_vals[]) {
-    __T_START;
-    libperf_init(custom_print);
-    if (pmu_counter_read(event_vals) != 0) {
-        // Handle error
-        return -1;
-    }
-    __T_END;
-    return tests_failed == 0 ? 0 : -1;
-}
-
-//Instrumentation without local variable
-
-// START CYCLE
-uint64_t process_start_count(struct CountData *count_data) {
-    if (perf_data != NULL && count_data != NULL) {
-        // Check if perf_data->global_evsel_0 is not NULL
-        if (perf_data->global_evsel[0] != NULL) {
-            // Accessing perf_data->global_evsel_0 is safe
-            pmuv3_read_event(0, &count_data->global_count[0]);
-        } else {
-            // Handle the case where perf_data->global_evsel_0 is NULL
-            // This might indicate an error in your program
-            // You can print an error message or take appropriate action
-            printf("Error: perf_data->global_evsel_0 is NULL\n");
-        }
-    }
-    for(uint64_t i =0; i < num_events; i++) {
-        pmuv3_read_event(i, &count_data->global_count[i]);
-        event_counts[0].start_cnt[i] = count_data->global_count[i].val;
-    }
-    return 0;
-}
-
-// START CYCLE
-uint64_t get_start_count(struct CountData *count_data, const char* context, uint64_t index) { 
-    if (perf_data != NULL && count_data != NULL) {
-        // Check if perf_data->global_evsel_0 is not NULL
-        if (perf_data->global_evsel[0] != NULL) {
-            // Accessing perf_data->global_evsel_0 is safe
-            pmuv3_read_event(0, &count_data->global_count[0]);
-        } else {
-            // Handle the case where perf_data->global_evsel_0 is NULL
-            // This might indicate an error in your program
-            // You can print an error message or take appropriate action
-            printf("Error: perf_data->global_evsel_0 is NULL\n");
-        }
-    }
-    event_counts[index].context = context;
-    for(uint64_t i =0; i < num_events; i++) {
-        pmuv3_read_event(i, &count_data->global_count[i]);
-        event_counts[index].start_cnt[i] = count_data->global_count[i].val;
-    }
-    return 0;
-}
-
-//Instrumenting w/o local variable
-// END CYCLE 
-uint64_t process_end_count(struct CountData *count_data) {
-    // Perform perf_evsel__read operation to get end count for the event at the given index
-    for(uint64_t i =0; i < num_events; i++) {
-        pmuv3_read_event(i, &count_data->global_count[i]);
-        event_counts[0].end_cnt[i] = count_data->global_count[i].val;
-    }
-    return 0;
-}
-
-//Instrumenting with local variable in multiple functions.
-uint64_t get_end_count(struct CountData *count_data, const char* context, uint64_t index) {
-
-    for(uint64_t i =0; i < num_events; i++) {
-        pmuv3_read_event(i, &count_data->global_count[i]);
-        event_counts[index].end_cnt[i] = count_data->global_count[i].val;
-    }
-    //array_index--;
-    event_counts[index].context = context;
-    //end_index++;
-    return 0;
-}
-
-// SHUTDOWN API
-int shutdown_resources() {
-    //printf("Entering shutdown_resources\n");
-    if (perf_data == NULL) {
-        printf("perf_data is NULL\n");
-        return -1; // Return an error code if perf_data is NULL
-    }
-    // Debugging statements for global_evsel_0
-    for(uint64_t i =0; i < num_events; i++){
-        if (perf_data->global_evsel[i] != NULL) {
-            perf_evsel__munmap(perf_data->global_evsel[i]);
-            perf_evsel__close(perf_data->global_evsel[i]);
-            perf_evsel__delete(perf_data->global_evsel[i]);
-            perf_data->global_evsel[i] = NULL;
-            perf_data->pc[i] = NULL;
-        }
-    }
-    if (global_threads != NULL) {
-        perf_thread_map__put(global_threads);
-        global_threads = NULL;
-    }
-    free_bundle_memory();
-    return 0;
-}
-// Function to initialize a bundle
-void init_bundle(bundles* bundle) {
-    event_values = malloc(num_events * sizeof(int));
-    event_names = (char**)malloc(num_events * sizeof(char*));
-
-    for (size_t i = 0; i < num_events; i++) {
-        event_values[i] = bundle[i].event_value;
-        event_names[i] = (char*)malloc((strlen(bundle[i].name) + 1) * sizeof(char));
-        strcpy(event_names[i], bundle[i].name);
-    }
-}
-
-// Function to free allocated memory
-void free_bundle_memory() {
     if (event_names != NULL) {
-        for (size_t i = 0; i < num_events; i++) {
+        for (uint64_t i = 0; i < num_events; i++)
             free(event_names[i]);
-        }
         free(event_names);
         event_names = NULL;
     }
-    if (event_values != NULL) {
-        free(event_values);
-        event_values = NULL;
+    free(event_values);
+    event_values = NULL;
+}
+
+void init_bundle(bundles *bundle)
+{
+    event_values = calloc(num_events, sizeof(*event_values));
+    event_names = calloc(num_events, sizeof(*event_names));
+    if (event_values == NULL || event_names == NULL) {
+        free_bundle_memory();
+        return;
+    }
+
+    for (uint64_t i = 0; i < num_events; i++) {
+        event_values[i] = bundle[i].event_value;
+        event_names[i] = strdup(bundle[i].name);
+        if (event_names[i] == NULL) {
+            free_bundle_memory();
+            return;
+        }
     }
 }
 
-int pmuv3_bundle_init(int num_bundles) {
-    if (num_bundles < 0 || num_bundles >= TOTAL_BUNDLE_NUM) {
-        printf("Error: Invalid bundle number %d\n", num_bundles);
-        exit(1);
+int pmuv3_bundle_init(int bundle_num)
+{
+    if (bundle_num < 0 || bundle_num >= TOTAL_BUNDLE_NUM) {
+        fprintf(stderr, "PMUv3: bundle number must be in [0,%d]\n",
+                TOTAL_BUNDLE_NUM - 1);
+        return -1;
     }
 
-    switch (num_bundles) {
-        case 0: num_events = sizeof(bundle0) / sizeof(bundle0[0]); init_bundle(bundle0); break;
-        case 1: num_events = sizeof(bundle1) / sizeof(bundle1[0]);init_bundle(bundle1); break;
-        case 2: num_events = sizeof(bundle2) / sizeof(bundle2[0]);init_bundle(bundle2); break;
-        case 3: num_events = sizeof(bundle3) / sizeof(bundle3[0]);init_bundle(bundle3); break;
-        case 4: num_events = sizeof(bundle4) / sizeof(bundle4[0]);init_bundle(bundle4); break;
-        case 5: num_events = sizeof(bundle5) / sizeof(bundle5[0]);init_bundle(bundle5); break;
-        case 6: num_events = sizeof(bundle6) / sizeof(bundle6[0]);init_bundle(bundle6); break;
-        case 7: num_events = sizeof(bundle7) / sizeof(bundle7[0]);init_bundle(bundle7); break;
-        case 8: num_events = sizeof(bundle8) / sizeof(bundle8[0]);init_bundle(bundle8); break;
-        case 9: num_events = sizeof(bundle9) / sizeof(bundle9[0]);init_bundle(bundle9); break;
-        case 10: num_events = sizeof(bundle10) / sizeof(bundle10[0]);init_bundle(bundle10); break;
-        case 11: num_events = sizeof(bundle11) / sizeof(bundle11[0]);init_bundle(bundle11); break;
-        case 12: num_events = sizeof(bundle12) / sizeof(bundle12[0]);init_bundle(bundle12); break;
-        case 13: num_events = sizeof(bundle13) / sizeof(bundle13[0]);init_bundle(bundle13); break;
-        case 14: num_events = sizeof(bundle14) / sizeof(bundle14[0]);init_bundle(bundle14); break;
-        default:
-            printf("Argument should be one of these in the interval [0,14] \n");
-            exit(1);
-    }
+    num_bundles = bundle_num;
+    num_events = bundle_definitions[bundle_num].count;
+    if (num_events > MAX_EVENTS)
+        return -1;
 
-    __T("init api", !init_api(0, NULL, event_values));
+    init_bundle(bundle_definitions[bundle_num].events);
+    if (event_values == NULL || event_names == NULL)
+        return -1;
+    if (init_api(0, NULL, event_values) != 0) {
+        free_bundle_memory();
+        return -1;
+    }
     return 0;
 }
