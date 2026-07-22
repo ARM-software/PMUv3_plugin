@@ -179,6 +179,44 @@ process_single_chunk(cur_bundle_no);
 shutdown_resources();
 ```
 
+## Scenario V: Multiple Worker Threads In C Or C++
+
+The same lifecycle applies to `pthread` and `std::thread` programs. Workers
+must exist before PMUv3 initialization because initialization opens counters
+for the current `/proc/self/task` thread snapshot.
+
+Main-thread sequence:
+
+```c
+create_workers_that_wait_at_a_barrier();
+
+pmuv3_bundle_init(cur_bundle_no);
+release_worker_barrier();
+
+join_all_workers();
+process_data(cur_bundle_no);
+shutdown_resources();
+```
+
+Each worker uses the existing instrumentation APIs:
+
+```c
+pmuv3_register_current_thread();
+
+uint64_t local = get_next_index();
+get_start_count(&count_data, "WORKER_REGION", local);
+
+/* worker code block to be instrumented */
+
+get_end_count(&count_data, "WORKER_REGION", local);
+pmuv3_unregister_current_thread();
+```
+
+Registration and unregistration occur once per worker, outside the measured
+region. A worker created after `pmuv3_bundle_init()` cannot be added to the
+active session; finish the session and initialize a new one for a later wave of
+threads.
+
 ## Notes
 
 - Use `get_next_index()` before every separate `get_start_count()` call.

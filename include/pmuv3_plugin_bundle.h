@@ -29,11 +29,13 @@ extern "C" {
 #endif
 
 int pmuv3_bundle_init(int bundle_num);
+int pmuv3_register_current_thread(void);
+int pmuv3_unregister_current_thread(void);
 void init_bundle(bundles* bundle);
 void free_bundle_memory();
 //INITIALIZATION API
 
-int init_api(int argc, char **argv, int event_vals[]);
+int init_api(int argc, char **argv, const uint32_t event_vals[]);
 
 //START CYCLE API
 uint64_t process_start_count(struct CountData *count_data);
@@ -44,7 +46,7 @@ uint64_t process_end_count(struct CountData *count_data);
 uint64_t get_end_count(struct CountData *count_data, const char* context, uint64_t index);
 
 //SHUTDOWN API
-int shutdown_resources();
+int shutdown_resources(void);
 //uint64_t get_next_index();
 uint64_t get_next_index(void);
 
